@@ -1,6 +1,21 @@
 {
     "latex-workshop.latex.external.build.command": "showyourwork",
-    "latex-workshop.latex.external.build.args": [],
+    "latex-workshop.latex.external.build.args": ["build", "--conda-frontend=mamba"],
     "latex-workshop.view.pdf.viewer": "tab",
-    "latex-workshop.latex.outDir": "%WORKSPACE_FOLDER%"
+    "latex-workshop.latex.outDir": "%WORKSPACE_FOLDER%",
+    "workbench.colorCustomizations": {
+        "activityBar.activeBackground": "#65c89b",
+        "activityBar.background": "#65c89b",
+        "activityBar.foreground": "#15202b",
+        "activityBar.inactiveForeground": "#15202b99",
+        "activityBarBadge.background": "#945bc4",
+        "activityBarBadge.foreground": "#e7e7e7",
+        "commandCenter.border": "#15202b99",
+        "sash.hoverBorder": "#65c89b",
+        "titleBar.activeBackground": "#42b883",
+        "titleBar.activeForeground": "#15202b",
+        "titleBar.inactiveBackground": "#42b88399",
+        "titleBar.inactiveForeground": "#15202b99"
+    },
+    "peacock.color": "#42b883"
 }
