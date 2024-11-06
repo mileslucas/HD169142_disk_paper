@@ -3,8 +3,8 @@ from astropy.io import fits
 from utils_plot_mosaic import plot_mosaic
 
 
-for date in ("20230707", "20240729"):
-    stokes_path = paths.data / f"{date}_HD169142_vampires_stokes_cube_opt_Qphi.fits"
+for date in ("20230707", "20240727", "20240728", "20240729"):
+    stokes_path = paths.data / date / f"{date}_HD169142_vampires_stokes_cube.fits"
     stokes_cube, header = fits.getdata(stokes_path, header=True)
 
     fig = plot_mosaic(stokes_cube)
