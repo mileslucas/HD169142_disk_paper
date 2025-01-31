@@ -1,6 +1,5 @@
 import paths
 from astropy.io import fits
-from utils_plot_mosaic import plot_mosaic
 import proplot as pro
 from matplotlib import patches
 import numpy as np

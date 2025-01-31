@@ -1,0 +1,397 @@
+import numpy as np
+import paths
+from astropy.io import fits
+from astropy.convolution import convolve, kernels
+import tqdm
+from astropy.stats import biweight_location, biweight_scale
+import pandas as pd
+from astropy.nddata import Cutout2D
+from target_info import target_info
+
+vampires_filters = ["F610", "F670", "F720", "F760"]
+vampires_psfs = [
+    fits.getdata(paths.data / f"VAMPIRES_{filt}_synthpsf.fits")
+    for filt in vampires_filters
+]
+
+
+def crop(data, window):
+    cy, cx = np.array(data.shape[-2:]) / 2 - 0.5
+    cutout = Cutout2D(data, (cx, cy), window)
+    return cutout.data
+
+
+def get_azimuthal_profile(image, image_err, azimuth_deg, bin_width=5) -> dict:
+    azimuth_ints = np.round(azimuth_deg).astype(int)
+    bins = np.arange(azimuth_ints.min(), azimuth_ints.max() + 1, bin_width)
+    counts = []
+    errs = []
+    for i in range(len(bins) - 1):
+        mask = (azimuth_deg >= bins[i]) & (azimuth_deg <  bins[i + 1]) & np.isfinite(image)
+        data = image[mask]
+        err = image_err[mask]
+        mean = np.mean(data)
+        counts.append(mean)
+        N = data.size
+        std_err = np.std(data) / np.sqrt(N)
+        tot_err = np.sqrt(np.sum(err**2) / N**2 + std_err**2)
+        errs.append(tot_err)
+    bin_centers = (bins[:-1] + bins[1:]) / 2
+    result = {"azimuth": bin_centers, "profile": np.array(counts), "error": np.array(errs)}
+    return result
+
+def quickplot(Qphi, Uphi):
+    import proplot as pro
+    from astropy.visualization import simple_norm
+    fig, axes = pro.subplots(ncols=2)
+    norm = simple_norm(Qphi, stretch="asinh", vmin=0)
+    axes[0].imshow(Qphi, origin="lower", cmap="magma", norm=norm, vmin=0)
+    axes[1].imshow(Uphi, origin="lower", cmap="magma", norm=norm, vmin=0)
+    axes.format(toplabels=("Qphi", "Uphi"))
+    pro.show(block=True)
+    pro.close()
+
+def process_vampires(folder: str) -> None:
+    date = folder.replace("_VAMPIRES", "")
+    # load data
+    with fits.open(
+        paths.data
+        / folder
+        / "optimized"
+        / f"{date}_HD169142_vampires_stokes_cube_optimized.fits"
+    ) as hdul:
+        stokes_cube = hdul[0].data
+
+    with fits.open(
+        paths.data / folder / "diskmap" / f"{folder}_HD169142_diskmap_radius.fits"
+    ) as hdul:
+        radius_map = hdul[0].data
+    with fits.open(
+        paths.data / folder / "diskmap" / f"{folder}_HD169142_diskmap_azimuth.fits"
+    ) as hdul:
+        azimuth_map = hdul[0].data
+
+    r2_map = radius_map**2
+
+    masks = {
+        "inner": (radius_map > 15) & (radius_map <= 35),
+        "outer": (radius_map > 48) & (radius_map <= 110),
+    }
+
+    # I_frames = np.nanmean(stokes_cube[:, :2], axis=1)
+    # Qphi_frames = stokes_cube[:, 4]
+    # Uphi_frames = stokes_cube[:, 5]
+
+    Qphi_profiles = []
+
+    # warp to polar coordinates
+    psf = np.sum(vampires_psfs, axis=0)
+    psf /= np.sum(psf)
+
+    for mask_name, mask in masks.items():
+        _data = convolve(crop(stokes_cube[4], 400), psf) * r2_map
+        _err = convolve(crop(stokes_cube[5], 400), psf) * r2_map
+        _data[~mask] = np.nan
+        _err[~mask] = np.nan
+        # print(folder, mask_name)
+        # quickplot(_data, _err)
+        info = get_azimuthal_profile(_data, _err, azimuth_map)
+        info["filter"] = "MBI"
+        info["region"] = mask_name
+        Qphi_profiles.append(info)
+
+    Qphi_dataframe = pd.concat(map(pd.DataFrame, Qphi_profiles))
+
+    output_df = pd.DataFrame(
+        {
+            "azimuth(deg)": Qphi_dataframe["azimuth"],
+            "filter": Qphi_dataframe["filter"],
+            "region": Qphi_dataframe["region"],
+            "Qphi": Qphi_dataframe["profile"],
+            "Qphi_err": Qphi_dataframe["error"],
+        }
+    )
+    output_df.dropna(axis=0, how="any", inplace=True)
+    output_name = paths.data / folder / f"{folder}_HD169142_azimuthal_profiles.csv"
+    output_df.to_csv(output_name, index=False)
+
+
+def process_naco(folder: str) -> None:
+    # load data
+    Qphi = fits.getdata(
+        paths.data / folder / "coadded" / "Q_phi.fits",
+        ext=("Q_PHI_CTC_IPS", 1),
+    )
+    Uphi = fits.getdata(
+        paths.data / folder / "coadded" / "U_phi.fits", ext=("U_PHI_CTC_IPS", 1)
+    )
+
+    radius_map = fits.getdata(
+        paths.data / folder / "diskmap" / f"{folder}_HD169142_diskmap_radius.fits"
+    )
+    azimuth_map = fits.getdata(
+        paths.data / folder / "diskmap" / f"{folder}_HD169142_diskmap_azimuth.fits"
+    )
+    r2_map = radius_map**2
+
+    masks = {
+        "inner": (radius_map > 15) & (radius_map <= 35),
+        "outer": (radius_map > 48) & (radius_map <= 110),
+    }
+
+    Qphi_profiles = []
+    kernel_fwhm = 2
+    kernel = kernels.Gaussian2DKernel(kernel_fwhm / (2 * np.sqrt(2 * np.log(2))))
+    # warp to polar coordinates
+    for mask_name, mask in masks.items():
+        _data = convolve(crop(Qphi, 120), kernel) * r2_map
+        _err = convolve(crop(Uphi, 120), kernel) * r2_map
+        _data[~mask] = np.nan
+        _err[~mask] = np.nan
+        # print(folder, mask_name)
+        # quickplot(_data, _err)
+        info = get_azimuthal_profile(_data, _err, azimuth_map)
+        info["filter"] = "H"
+        info["region"] = mask_name
+        Qphi_profiles.append(info)
+
+    Qphi_dataframe = pd.concat(map(pd.DataFrame, Qphi_profiles))
+
+    output_df = pd.DataFrame(
+        {
+            "azimuth(deg)": Qphi_dataframe["azimuth"],
+            "filter": Qphi_dataframe["filter"],
+            "region": Qphi_dataframe["region"],
+            "Qphi": Qphi_dataframe["profile"],
+            "Qphi_err": Qphi_dataframe["error"],
+        }
+    )
+    output_df.dropna(axis=0, how="any", inplace=True)
+    output_name = paths.data / folder / f"{folder}_HD169142_azimuthal_profiles.csv"
+    output_df.to_csv(output_name, index=False)
+
+
+def process_irdis(folder: str) -> None:
+    # load data
+    cube = fits.getdata(paths.data / folder / f"{folder}_HD169142_stokes_cube.fits")
+    Qphi = cube[1]
+    Uphi = cube[2]
+
+    radius_map = fits.getdata(
+        paths.data / folder / "diskmap" / f"{folder}_HD169142_diskmap_radius.fits"
+    )
+    azimuth_map = fits.getdata(
+        paths.data / folder / "diskmap" / f"{folder}_HD169142_diskmap_azimuth.fits"
+    )
+    r2_map = radius_map**2
+
+    masks = {
+        "inner": (radius_map > 15) & (radius_map <= 35),
+        "outer": (radius_map > 48) & (radius_map <= 110),
+    }
+
+    Qphi_profiles = []
+    kernel_fwhm = 1
+    kernel = kernels.Gaussian2DKernel(kernel_fwhm / (2 * np.sqrt(2 * np.log(2))))
+    # warp to polar coordinates
+    for mask_name, mask in masks.items():
+        _data = convolve(crop(Qphi, 500), kernel) * r2_map
+        _err = convolve(crop(Uphi, 500), kernel) * r2_map
+        _data[~mask] = np.nan
+        _err[~mask] = np.nan
+        # print(folder, mask_name)
+        # quickplot(_data, _err)
+        info = get_azimuthal_profile(_data, _err, azimuth_map)
+        info["filter"] = "J" if "2015" in folder else "K"
+        info["region"] = mask_name
+        Qphi_profiles.append(info)
+
+    Qphi_dataframe = pd.concat(map(pd.DataFrame, Qphi_profiles))
+
+    output_df = pd.DataFrame(
+        {
+            "azimuth(deg)": Qphi_dataframe["azimuth"],
+            "filter": Qphi_dataframe["filter"],
+            "region": Qphi_dataframe["region"],
+            "Qphi": Qphi_dataframe["profile"],
+            "Qphi_err": Qphi_dataframe["error"],
+        }
+    )
+    output_df.dropna(axis=0, how="any", inplace=True)
+    output_name = paths.data / folder / f"{folder}_HD169142_azimuthal_profiles.csv"
+    output_df.to_csv(output_name, index=False)
+
+
+def process_zimpol(folder: str) -> None:
+    # load data
+    Qphi = fits.getdata(paths.data / folder / "Qphi.fits")
+    Uphi = fits.getdata(paths.data / folder / "Uphi.fits")
+
+    radius_map = fits.getdata(
+        paths.data / folder / "diskmap" / f"{folder}_HD169142_diskmap_radius.fits"
+    )
+    azimuth_map = fits.getdata(
+        paths.data / folder / "diskmap" / f"{folder}_HD169142_diskmap_azimuth.fits"
+    )
+    r2_map = radius_map**2
+
+    masks = {
+        "inner": (radius_map > 15) & (radius_map <= 35),
+        "outer": (radius_map > 48) & (radius_map <= 110),
+    }
+
+    Qphi_profiles = []
+    kernel_fwhm = 1
+    kernel = kernels.Gaussian2DKernel(kernel_fwhm / (2 * np.sqrt(2 * np.log(2))))
+    # warp to polar coordinates
+    for mask_name, mask in masks.items():
+        _data = convolve(Qphi, kernel) * r2_map
+        _err = convolve(Uphi, kernel) * r2_map
+        _data[~mask] = np.nan
+        _err[~mask] = np.nan
+        # print(folder, mask_name)
+        # quickplot(_data, _err)
+        info = get_azimuthal_profile(_data, _err, azimuth_map)
+        info["filter"] = "VBB"
+        info["region"] = mask_name
+        Qphi_profiles.append(info)
+
+    Qphi_dataframe = pd.concat(map(pd.DataFrame, Qphi_profiles))
+
+    output_df = pd.DataFrame(
+        {
+            "azimuth(deg)": Qphi_dataframe["azimuth"],
+            "filter": Qphi_dataframe["filter"],
+            "region": Qphi_dataframe["region"],
+            "Qphi": Qphi_dataframe["profile"],
+            "Qphi_err": Qphi_dataframe["error"],
+        }
+    )
+    output_df.dropna(axis=0, how="any", inplace=True)
+    output_name = paths.data / folder / f"{folder}_HD169142_azimuthal_profiles.csv"
+    output_df.to_csv(output_name, index=False)
+
+
+def process_gpi(folder: str) -> None:
+    # load data
+    cube = fits.getdata(paths.data / folder / f"{folder}_HD169142_stokes_cube.fits")
+    Qphi = cube[1]
+    Uphi = cube[2]
+
+    radius_map = fits.getdata(
+        paths.data / folder / "diskmap" / f"{folder}_HD169142_diskmap_radius.fits"
+    )
+    azimuth_map = fits.getdata(
+        paths.data / folder / "diskmap" / f"{folder}_HD169142_diskmap_azimuth.fits"
+    )
+    r2_map = radius_map**2
+
+    masks = {
+        "inner": (radius_map > 15) & (radius_map <= 35),
+        "outer": (radius_map > 48) & (radius_map <= 110),
+    }
+
+    Qphi_profiles = []
+    kernel_fwhm = 1
+    kernel = kernels.Gaussian2DKernel(kernel_fwhm / (2 * np.sqrt(2 * np.log(2))))
+    # warp to polar coordinates
+    for mask_name, mask in masks.items():
+        _data = convolve(Qphi, kernel) * r2_map
+        _err = convolve(Uphi, kernel) * r2_map
+        _data[~mask] = np.nan
+        _err[~mask] = np.nan
+        # print(folder, mask_name)
+        # quickplot(_data, _err)
+        info = get_azimuthal_profile(_data, _err, azimuth_map)
+        info["filter"] = "J"
+        info["region"] = mask_name
+        Qphi_profiles.append(info)
+
+    Qphi_dataframe = pd.concat(map(pd.DataFrame, Qphi_profiles))
+
+    output_df = pd.DataFrame(
+        {
+            "azimuth(deg)": Qphi_dataframe["azimuth"],
+            "filter": Qphi_dataframe["filter"],
+            "region": Qphi_dataframe["region"],
+            "Qphi": Qphi_dataframe["profile"],
+            "Qphi_err": Qphi_dataframe["error"],
+        }
+    )
+    output_df.dropna(axis=0, how="any", inplace=True)
+    output_name = paths.data / folder / f"{folder}_HD169142_azimuthal_profiles.csv"
+    output_df.to_csv(output_name, index=False)
+
+
+def process_alma(folder: str) -> None:
+    # load data
+    frame = fits.getdata(paths.data / folder / "HD169142.selfcal.concat.GPU-UVMEM.centered_mJyBeam.fits")
+
+    radius_map = fits.getdata(
+        paths.data / folder / "diskmap" / f"{folder}_HD169142_diskmap_radius.fits"
+    )
+    azimuth_map = fits.getdata(
+        paths.data / folder / "diskmap" / f"{folder}_HD169142_diskmap_azimuth.fits"
+    )
+
+    masks = {
+        "inner": (radius_map > 15) & (radius_map <= 35),
+        "outer": (radius_map > 48) & (radius_map <= 110),
+    }
+
+    Qphi_profiles = []
+    # warp to polar coordinates
+    for mask_name, mask in masks.items():
+        _data = frame
+        _err = np.sqrt(frame)
+        _data[~mask] = np.nan
+        _err[~mask] = np.nan
+        # print(folder, mask_name)
+        # quickplot(_data, _err)
+        info = get_azimuthal_profile(_data, _err, azimuth_map)
+        info["filter"] = "1.3mm"
+        info["region"] = mask_name
+        Qphi_profiles.append(info)
+
+    Qphi_dataframe = pd.concat(map(pd.DataFrame, Qphi_profiles))
+
+    output_df = pd.DataFrame(
+        {
+            "azimuth(deg)": Qphi_dataframe["azimuth"],
+            "filter": Qphi_dataframe["filter"],
+            "region": Qphi_dataframe["region"],
+            "I": Qphi_dataframe["profile"],
+            "I_err": Qphi_dataframe["error"],
+        }
+    )
+    output_df.dropna(axis=0, how="any", inplace=True)
+    output_name = paths.data / folder / f"{folder}_HD169142_azimuthal_profiles.csv"
+    output_df.to_csv(output_name, index=False)
+
+if __name__ == "__main__":
+    folders = [
+        "20120726_NACO",
+        "20140425_GPI",
+        "20150503_IRDIS",
+        "20150710_ZIMPOL",
+        "20170918_ALMA",
+        "20180715_ZIMPOL",
+        "20210906_IRDIS",
+        "20230707_VAMPIRES",
+        "20240729_VAMPIRES",
+    ]
+    for i, folder in enumerate(tqdm.tqdm(folders)):
+        if "VAMPIRES" in folder:
+            process_vampires(folder)
+        elif "NACO" in folder:
+            process_naco(folder)
+        elif "IRDIS" in folder:
+            process_irdis(folder)
+        elif "ZIMPOL" in folder:
+            process_zimpol(folder)
+        elif "GPI" in folder:
+            process_gpi(folder)
+        elif "ALMA" in folder:
+            process_alma(folder)
+        else:
+            print(f"Folder not recognized: {folder=}")
