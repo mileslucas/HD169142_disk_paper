@@ -7,30 +7,14 @@ from astropy.convolution import convolve, kernels
 import tqdm
 from astropy.visualization import simple_norm
 from target_info import target_info
-from skimage import filters
+from utils_ephemerides import blob_c_position, blob_d_position, keplerian_warp
 from astropy import time
 
 
-def solve_kepler_for_period(separation):
-    G = 39.476926408897626 # au^3 / Msun / yr^2
-    M = target_info.stellar_mass
-    T = np.sqrt(separation**3 * 4 * np.pi**2 / (G * M))
-    angular_velocity = 360 / T # deg / yr
-    return angular_velocity
-
-
-def polar_roll_frame(polar_frame, radii_au, time: time.Time, t0: time.Time):
-    delta_t_yr = (time - t0).jd / 365.25
-    angular_velocity = solve_kepler_for_period(radii_au)
-    total_motion = angular_velocity * delta_t_yr
-    total_motion_int = np.round(total_motion / 5).astype(int)
-    # print(delta_t_yr, total_motion_int)
-    # total_motion_int = 
-    output_frame = polar_frame.copy()
-    for i in range(output_frame.shape[0]):
-        output_frame[i] = np.roll(polar_frame[i], (total_motion_int[i], 0))
-    return output_frame
-
+def label_from_folder(foldername):
+    tokens = foldername.split("_")
+    date = f"{tokens[0][:4]}/{tokens[0][4:6]}/{tokens[0][6:]}"
+    return f"{date} {tokens[1]}"
 
 def time_from_folder(foldername: str) -> time.Time:
     date_raw = foldername.split("_")[0]
@@ -42,17 +26,12 @@ def time_from_folder(foldername: str) -> time.Time:
     return time.Time(ymd, format="ymdhms")
 
 
-def label_from_folder(foldername):
-    tokens = foldername.split("_")
-    date = f"{tokens[0][:4]}/{tokens[0][4:6]}/{tokens[0][6:]}"
-    return f"{date} {tokens[1]}"
-
-
-if __name__ == "__main__": 
+if __name__ == "__main__":
     pro.rc["image.origin"] = "lower"
+    pro.rc["image.cmap"] = "bone"
     pro.rc["axes.grid"] = False
-    pro.rc["axes.facecolor"] = "white"
-    pro.rc["font.size"] = 8
+    pro.rc["axes.facecolor"] = "w"
+    pro.rc["font.size"] = 9
     pro.rc["title.size"] = 9
 
     folders = [
@@ -65,7 +44,6 @@ if __name__ == "__main__":
         "20230707_VAMPIRES",
         "20240729_VAMPIRES",
     ]
-    timestamps = list(map(time_from_folder, folders))
     iwas = {
         "20230707_VAMPIRES": 105,
         "20240727_VAMPIRES": 59,
@@ -92,8 +70,11 @@ if __name__ == "__main__":
     def format_date(date):
         return f"{date[:4]}/{date[4:6]}"
 
-    for i, folder in enumerate(tqdm.tqdm(folders)):
+    timestamps = list(map(time_from_folder, folders))
 
+    t0 = timestamps[4]
+
+    for i, folder in enumerate(tqdm.tqdm(folders)):
     # load data
         with fits.open(
             paths.data
@@ -102,35 +83,42 @@ if __name__ == "__main__":
         ) as hdul:
             polar_cube = hdul[0].data
 
-
         rin = np.floor(15 / target_info.dist_pc / pxscales[folder]).astype(int)
-        rout = np.ceil(35 / target_info.dist_pc / pxscales[folder]).astype(int)
-
+        rout = np.ceil(45 / target_info.dist_pc / pxscales[folder]).astype(int)
+        
         rs = np.arange(polar_cube.shape[0])
 
         mask = (rs >= rin) & (rs <= rout)
         ext = (0, 360, rin * pxscales[folder] * target_info.dist_pc, rout * pxscales[folder] * target_info.dist_pc)
 
-        polar_cube_rolled = polar_roll_frame(polar_cube[mask, :], rs[mask] * target_info.dist_pc * pxscales[folder], timestamps[i], timestamps[4])
-        # polar_cube_rolled -= np.nanmedian(polar_cube_rolled, axis=1, keepdims=True)
-        polar_cube_rolled = filters.unsharp_mask(polar_cube_rolled, radius=2, amount=1, preserve_range=True)
+        c_a, c_th = blob_c_position(t0)
+        d_a, d_th = blob_d_position(t0)
+        
+
+        axes[i].scatter(c_th, c_a, marker="^", ms=30, c="0.1", lw=1)
+        axes[i].scatter(d_th, d_a, marker="v", ms=30, c="0.1", lw=1)
+
         # PDI images
-        norm = simple_norm(polar_cube_rolled, vmin=0, stretch="sinh", sinh_a=0.7)
-        # norm = pro.DivergingNorm()
-        im = axes[i].imshow(polar_cube_rolled, extent=ext, cmap="bone", norm=norm, vmin=norm.vmin, vmax=norm.vmax)
-         # axes[0].colorbar(im)
+        image = keplerian_warp(polar_cube[mask, :], rs[mask] * target_info.dist_pc * pxscales[folder], timestamps[i], t0)
+        image_mean = np.nanmedian(image, axis=1, keepdims=True)
+        norm_image = image  - image_mean
+
+        norm = pro.DivergingNorm()
+        im = axes[i].imshow(norm_image, extent=ext, cmap="div", norm=norm)
+        # axes[0].colorbar(im)
         labels = label_from_folder(folder).split()
         axes[i].text(
-            0.03, 0.95, labels[0], transform="axes", c="white", ha="left", va="top", fontsize=8, fontweight="bold"
+            0.03, 0.95, labels[0], transform="axes", c="0.1 ", ha="left", va="top", fontsize=8, fontweight="bold"
         )
         axes[i].text(
-            0.99, 0.95, labels[1], transform="axes", c="white", ha="right", va="top", fontsize=8, fontweight="bold"
+            0.99, 0.95, labels[1], transform="axes", c="0.1 ", ha="right", va="top", fontsize=8, fontweight="bold"
         )
 
-    for ax in axes:
-        norm_pa = np.mod(target_info.pos_angle - 90, 360) 
-        ax.axvline(norm_pa, lw=1, c="0.8")
-        ax.axvline(norm_pa - 180, lw=1, c="0.8")
+        # axes[i].axhline(iwas[folder] / 1e3 * dist, c="w", alpha=0.4)
+
+    
+
+
 
     ## sup title
     axes.format(
@@ -138,12 +126,10 @@ if __name__ == "__main__":
         xlabel="Angle E of N (°)",
         ylabel="Separation (au)",
         xlocator=90,
-    ) 
+    )
 
     # axes[:-1].format(xtickloc="none")
 
     fig.savefig(
         paths.figures / "HD169142_polar_collapsed_inner_rolled_subbed.pdf", bbox_inches="tight", dpi=300
     )
-
-

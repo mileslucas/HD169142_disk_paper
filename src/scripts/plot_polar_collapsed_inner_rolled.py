@@ -9,27 +9,7 @@ from astropy.visualization import simple_norm
 from target_info import target_info
 from astropy import time
 
-
-def solve_kepler_for_period(separation):
-    G = 39.476926408897626 # au^3 / Msun / yr^2
-    M = target_info.stellar_mass
-    T = np.sqrt(separation**3 * 4 * np.pi**2 / (G * M))
-    angular_velocity = 360 / T # deg / yr
-    return angular_velocity
-
-
-def polar_roll_frame(polar_frame, radii_au, time: time.Time, t0: time.Time):
-    delta_t_yr = (time - t0).jd / 365.25
-    angular_velocity = solve_kepler_for_period(radii_au)
-    total_motion = angular_velocity * delta_t_yr
-    total_motion_int = np.round(total_motion / 5).astype(int)
-    # print(delta_t_yr, total_motion_int)
-    # total_motion_int = 
-    output_frame = polar_frame.copy()
-    for i in range(output_frame.shape[0]):
-        output_frame[i] = np.roll(polar_frame[i], (total_motion_int[i], 0))
-    return output_frame
-
+from utils_ephemerides import keplerian_warp
 
 def time_from_folder(foldername: str) -> time.Time:
     date_raw = foldername.split("_")[0]
@@ -110,9 +90,9 @@ if __name__ == "__main__":
 
         mask = (rs >= rin) & (rs <= rout)
         ext = (0, 360, rin * pxscales[folder] * target_info.dist_pc, rout * pxscales[folder] * target_info.dist_pc)
+        rs_au = rs[mask] * target_info.dist_pc * pxscales[folder]
 
-        polar_cube_rolled = polar_roll_frame(polar_cube[mask, :], rs[mask] * target_info.dist_pc * pxscales[folder], timestamps[i], timestamps[4])
-
+        polar_cube_rolled = keplerian_warp(polar_cube[mask, :], rs_au, timestamps[i], timestamps[4])
         # PDI images
         norm = simple_norm(polar_cube_rolled, vmin=0, stretch="sinh", sinh_a=0.5)
         im = axes[i].imshow(polar_cube_rolled, extent=ext, norm=norm, vmin=norm.vmin, vmax=norm.vmax, cmap=pro.rc["cmap"])
