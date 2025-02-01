@@ -4,41 +4,7 @@ import pandas as pd
 from astropy.time import Time
 from scipy import signal
 import numpy as np
-
-
-def time_from_folder(foldername: str):
-    date_raw = foldername.split("_")[0]
-    ymd = {
-        "year": int(date_raw[:4]),
-        "month": int(date_raw[4:6]),
-        "day": int(date_raw[6:])
-    }
-    return Time(ymd, format="ymdhms")
-
-# def cross_correlate(curve1, curve2, pxscale):
-#     c1_pad
-#     cross_corr = np.correlate(curve1, curve2, mode="full")
-#     # Normalize correlation values
-#     cross_corr /= (np.std(curve1) * np.std(curve2) * len(curve1))
-
-
-#     # # cross_corr /= cross_corr.max()
-#     lags_inds = signal.correlation_lags(len(curve1), len(curve2))
-#     # # bin_width in azimuthal profile is 5 deg
-#     lags_deg_per_yr = lags_inds * pxscale
-#     # lags_deg_per_yr = np.arange(-len(curve1)//2, len(curve2)//2) * -pxscale
-#     return lags_deg_per_yr, cross_corr
-
-def cross_correlate(curve1, curve2, pxscale):
-    fft1 = np.fft.fft(curve1)
-    fft2 = np.fft.fft(curve2)
-
-
-    R = fft1 * fft2.conj()
-    r = np.fft.ifft(R)
-
-    lags = np.arange(-len(curve1)//2, len(curve2)//2) * pxscale
-    return lags, np.fft.fftshift(np.real(r))
+from utils_crosscorr import phase_correlogram
 
 
 if __name__ == "__main__":
@@ -66,9 +32,9 @@ if __name__ == "__main__":
     axes[0].plot(x, A, label="A")
     axes[0].plot(x, B, label="B")
 
-    lags, xcorr = cross_correlate(B, A, spacing)
+    lags, xcorr = phase_correlogram(B, A)
     norm_xcorr = xcorr / np.nanmax(xcorr)
-    norm_lags = lags# * spacing - np.pi
+    norm_lags = lags / 5 * spacing
 
     axes[1].plot(norm_lags, norm_xcorr)
     max_corr_ind = np.nanargmax(norm_xcorr)

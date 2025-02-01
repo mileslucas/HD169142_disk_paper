@@ -14,8 +14,10 @@ def label_from_folder(foldername):
 
 
 if __name__ == "__main__":
-    pro.rc["font.size"] = 7
-    pro.rc["title.size"] = 8
+    pro.rc["font.size"] = 8
+    pro.rc["title.size"] = 9
+    pro.rc["figure.dpi"] = 300
+    pro.rc["cycle"] = "ggplot"
 
     folders = [
         "20120726_NACO",
@@ -29,13 +31,13 @@ if __name__ == "__main__":
     ]
     ## Plot and save
     fig, axes = pro.subplots(
-        nrows=4, ncols=len(folders)//2, width="7in", height="4in", wspace=0.5, hspace=(0, 3, 0)
+        nrows=4, ncols=len(folders)//2, width="7in", height=f"{7 / (1.25 * 1.61803)}in", wspace=0.75, hspace=(0, 3, 0)
     )
 
     labels = [label_from_folder(f) for f in folders]
 
     # colors = [f"C{i}" for i in range(len(folders))]
-    color_map = {"inner": "C0", "outer": "C1"}
+    color_map = {"inner": "C0", "outer": "C3"}
     ax_map = {"inner": 1, "outer": 0}
     for folder_idx, folder in enumerate(folders):
 
@@ -64,26 +66,30 @@ if __name__ == "__main__":
                 c=color_map[reg_name],
             )
 
-    axes[1, 0].text(
-        0.03,
-        0.95,
-        "Inner",
-        c="0.3",
-        fontsize=9,
-        transform="axes",
-        ha="left",
-        va="top",
-    )
-    axes[0, 0].text(
-        0.03,
-        0.95,
-        "Outer",
-        c="0.3",
-        fontsize=9,
-        transform="axes",
-        ha="left",
-        va="top",
-    )
+
+    for i in (0, 2):
+        axes[i, 0].text(
+            0.02,
+            0.95,
+            "Outer",
+            c="C3",
+            fontsize=7,
+            fontweight="bold",
+            transform="axes",
+            ha="left",
+            va="top",
+        )
+        axes[i + 1, 0].text(
+            0.02,
+            0.95,
+            "Inner",
+            c="C0",
+            fontsize=7,
+            fontweight="bold",
+            transform="axes",
+            ha="left",
+            va="top",
+        )
 
     for ax in axes:
         # baseline

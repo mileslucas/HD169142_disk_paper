@@ -65,8 +65,11 @@ if __name__ == "__main__":
     }
 
     ## Plot and save
+    width = 3.31314
+    aspect_ratio = 1 / (3 * 1.61803)
+    height = width * aspect_ratio
     fig, axes = pro.subplots(
-        nrows=8, width="3.33in", refheight="0.8in", hspace=0.5
+        nrows=8, width=f"{width}in", refheight=f"{height}in", hspace=0.5
     )
 
     def format_date(date):
@@ -105,10 +108,10 @@ if __name__ == "__main__":
             0.99, 0.95, labels[1], transform="axes", c="white", ha="right", va="top", fontsize=8, fontweight="bold"
         )
 
-    for ax in axes:
-        norm_pa = np.mod(target_info.pos_angle - 90, 360)
-        ax.axvline(norm_pa, lw=1, c="0.8")
-        ax.axvline(norm_pa - 180, lw=1, c="0.8")
+    # for ax in axes:
+    #     norm_pa = np.mod(target_info.pos_angle - 90, 360)
+    #     ax.axvline(norm_pa, lw=1, c="0.8")
+    #     ax.axvline(norm_pa - 180, lw=1, c="0.8")
 
     ## sup title
     axes.format(
@@ -118,7 +121,7 @@ if __name__ == "__main__":
         xlocator=90,
     ) 
 
-    # axes[:-1].format(xtickloc="none")
+    axes[:-1].format(xtickloc="none")
 
     fig.savefig(
         paths.figures / "HD169142_polar_collapsed_inner_rolled.pdf", bbox_inches="tight", dpi=300

@@ -4,7 +4,7 @@ import pandas as pd
 from astropy.time import Time
 from scipy import signal
 import numpy as np
-import scienceplots
+from utils_crosscorr import phase_correlogram
 
 def time_from_folder(foldername: str):
     date_raw = foldername.split("_")[0]
@@ -15,36 +15,23 @@ def time_from_folder(foldername: str):
     }
     return Time(ymd, format="ymdhms")
 
-def cross_correlate(curve1, time1: str, curve2, time2: str):
-    time_delta = time_from_folder(time1) - time_from_folder(time2)
-    time_delta_yr = time_delta.jd / 365.25 # days to years
-
-    fft1 = np.fft.fft(curve1)
-    fft2 = np.fft.fft(curve2)
-
-    R = fft1 * fft2.conj()
-    r = np.fft.ifft(R)
-    cross_corr = np.real(np.fft.fftshift(r))
-    # cross_corr /= cross_corr.max()
-    # lags_inds = signal.correlation_lags(len(curve1), len(curve2))
-
-    lags_inds = np.arange(-len(curve1)//2, len(curve2)//2)
-    # lags_inds = 1 / np.fft.fftshift(np.fft.fftfreq(len(curve1)))
-    # bin_width in azimuthal profile is 5 deg
-    lags_deg_per_yr = lags_inds * 5 / time_delta_yr
-    return lags_deg_per_yr, cross_corr
-
 
 def label_from_folder(foldername):
     tokens = foldername.split("_")
     date = f"{tokens[0][:4]}/{tokens[0][4:6]}/{tokens[0][6:]}"
     return f"{date} {tokens[1]}"
 
+def get_time_delta_yr(folder1: str, folder2: str) -> float:
+    time1 = time_from_folder(folder1)
+    time2 = time_from_folder(folder2)
+    return (time2 - time1).jd / 365.25
 
 if __name__ == "__main__":
     pro.rc["font.size"] = 8
+    pro.rc["title.size"] = 9
     pro.rc["label.size"] = 8
     pro.rc["figure.dpi"] = 300
+    pro.rc["cycle"] = "ggplot"
 
     ## Plot and save
     width = 3.31314
@@ -68,16 +55,11 @@ if __name__ == "__main__":
 
     curves: dict[str, list] = {"inner": [], "outer": []}
 
-    # colors = [f"C{i}" for i in range(len(folders))]
-    color_map = {"inner": "C0", "outer": "C1"}
-    ax_map = {"inner": 1, "outer": 0}
     for folder_idx, folder in enumerate(folders):
         # load data
         table = pd.read_csv(
             paths.data / folder / f"{folder}_HD169142_azimuthal_profiles.csv"
         )
-        # if "VAMPIRES" in folder:
-        #     table = process_vampires(table)
 
         groups = table.groupby("region")
         
@@ -92,7 +74,6 @@ if __name__ == "__main__":
 
     xcorrs_inner = []
     xcorrs_outer = []
-    
 
     for col_idx in range(len(folders) - 1):
         curve1 = curves["inner"][col_idx]
@@ -102,7 +83,9 @@ if __name__ == "__main__":
                 continue
             curve2 = curves["inner"][row_idx]
             folder2 = folders[row_idx]
-            lags, xcorr = cross_correlate(curve2, folder2, curve1,folder1)
+            dt = get_time_delta_yr(folder1, folder2)
+            lags, xcorr = phase_correlogram(curve2, curve1)
+            lags = lags / dt
             inds = np.argsort(lags)
             extrap = np.interp(common_lag, lags[inds], xcorr[inds], left=np.nan, right=np.nan)
             xcorrs_inner.append(extrap)
@@ -113,7 +96,9 @@ if __name__ == "__main__":
                 continue
             curve2 = curves["outer"][row_idx]
             folder2 = folders[row_idx]
-            lags, xcorr = cross_correlate(curve2, folder2, curve1,folder1)
+            dt = get_time_delta_yr(folder1, folder2)
+            lags, xcorr = phase_correlogram(curve2, curve1)
+            lags = lags / dt
             inds = np.argsort(lags)
             extrap = np.interp(common_lag, lags[inds], xcorr[inds], left=np.nan, right=np.nan)
             xcorrs_outer.append(extrap)
@@ -124,16 +109,17 @@ if __name__ == "__main__":
     axes[0].plot(common_lag, norm_xcorr_inner)
     max_corr_ind = np.nanargmax(norm_xcorr_inner)
     axes[0].axvline(common_lag[max_corr_ind], c="C0", lw=1, alpha=0.6)
-    print(common_lag[max_corr_ind])
-
+    print(f"Inner ring peak correaltion: {common_lag[max_corr_ind]} deg/yr")
+    axes[0].format(title="Inner ring")
 
     mean_xcorr_outer = np.nanmean(xcorrs_outer, axis=0)
     norm_xcorr_outer = mean_xcorr_outer / np.nanmax(mean_xcorr_outer)
 
-    axes[1].plot(common_lag, norm_xcorr_outer, c="C1")
+    axes[1].plot(common_lag, norm_xcorr_outer, c="C3")
     max_corr_ind = np.nanargmax(norm_xcorr_outer)
-    axes[1].axvline(common_lag[max_corr_ind], c="C1", lw=1, alpha=0.6)
-    print(common_lag[max_corr_ind])
+    axes[1].axvline(common_lag[max_corr_ind], c="C3", lw=1, alpha=0.6)
+    axes[1].format(title="Outer ring")
+    print(f"Outer ring peak correaltion: {common_lag[max_corr_ind]} deg/yr")
     # axes[1, 0].text(
     #     0.03,
     #     0.95,
@@ -159,15 +145,9 @@ if __name__ == "__main__":
         ax.axhline(0, c="0.3", lw=1, zorder=0)
         ax.axvline(0, c="0.3", lw=1, zorder=0)
 
-    # axes[-1].legend(ncols=1, fontsize=8, order="F")
-
-
     axes.format(
         xlabel="Lag (°/yr)",
         xlocator=20,
-        # ylabel="Normalized cross-correlation",
-        # yformatter="none",
-        toplabels=("Inner Ring", "Outer Ring")
     )
 
     ymin, ymax = axes[0].get_ylim()

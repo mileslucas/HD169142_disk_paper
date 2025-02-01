@@ -28,11 +28,11 @@ def time_from_folder(foldername: str) -> time.Time:
 
 if __name__ == "__main__":
     pro.rc["image.origin"] = "lower"
-    pro.rc["image.cmap"] = "bone"
     pro.rc["axes.grid"] = False
     pro.rc["axes.facecolor"] = "w"
-    pro.rc["font.size"] = 9
+    pro.rc["font.size"] = 8
     pro.rc["title.size"] = 9
+    pro.rc["figure.dpi"] = 300
 
     folders = [
         "20120726_NACO",
@@ -63,8 +63,11 @@ if __name__ == "__main__":
     }
 
     ## Plot and save
+    width = 3.31314
+    aspect_ratio = 1 / (3 * 1.61803)
+    height = width * aspect_ratio
     fig, axes = pro.subplots(
-        nrows=8, width="3.33in", refheight="0.8in", hspace=0.5
+        nrows=8, width=f"{width}in", refheight=f"{height}in", hspace=0.5
     )
 
     def format_date(date):
@@ -108,7 +111,7 @@ if __name__ == "__main__":
         # axes[0].colorbar(im)
         labels = label_from_folder(folder).split()
         axes[i].text(
-            0.03, 0.95, labels[0], transform="axes", c="0.1 ", ha="left", va="top", fontsize=8, fontweight="bold"
+            0.01, 0.95, labels[0], transform="axes", c="0.1 ", ha="left", va="top", fontsize=8, fontweight="bold"
         )
         axes[i].text(
             0.99, 0.95, labels[1], transform="axes", c="0.1 ", ha="right", va="top", fontsize=8, fontweight="bold"
@@ -128,8 +131,8 @@ if __name__ == "__main__":
         xlocator=90,
     )
 
-    # axes[:-1].format(xtickloc="none")
+    axes[:-1].format(xtickloc="none")
 
     fig.savefig(
-        paths.figures / "HD169142_polar_collapsed_inner_rolled_subbed.pdf", bbox_inches="tight", dpi=300
+        paths.figures / "HD169142_polar_collapsed_inner_rolled_subbed.pdf", bbox_inches="tight"
     )
