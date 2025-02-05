@@ -16,6 +16,7 @@ def label_from_folder(foldername):
 if __name__ == "__main__":
     pro.rc["font.size"] = 7
     pro.rc["title.size"] = 8
+    pro.rc["figure.dpi"] = 300
     pro.rc["cycle"] = "ggplot"
 
     folders = [
@@ -80,8 +81,8 @@ if __name__ == "__main__":
             zorder=1
         )
         ax.text(
-            0.95, 0.89,
-            "ALMA",
+            0.95, 0.87,
+            "2017/09/08 ALMA",
             c="C3",
             fontsize=6,
             fontweight="bold",

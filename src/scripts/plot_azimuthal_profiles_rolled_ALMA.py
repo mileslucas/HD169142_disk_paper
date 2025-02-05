@@ -50,6 +50,8 @@ def label_from_folder(foldername):
 if __name__ == "__main__": 
     pro.rc["font.size"] = 8
     pro.rc["title.size"] = 9
+    pro.rc["figure.dpi"] = 300
+    pro.rc["cycle"] = "ggplot"
 
     folders = [
         "20120726_NACO",
@@ -120,7 +122,7 @@ if __name__ == "__main__":
 
     mean_prof =  np.nanmean(profiles, axis=0)
     norm_prof = mean_prof# / np.mean(mean_prof) - 1
-    axes[0].plot(theta,norm_prof, zorder=100)
+    axes[0].plot(theta, norm_prof * 100, c="C0", zorder=100)
 
     alma_folder = "20170918_ALMA"
     alma_polar_cube = fits.getdata(paths.data / alma_folder / f"{alma_folder}_HD169142_Qphi_polar.fits")
@@ -135,20 +137,36 @@ if __name__ == "__main__":
     alma_polar_cube_rolled = polar_roll_frame(alma_polar_cube[mask, :], rs[mask] * target_info.dist_pc * pxscales[alma_folder], alma_timestamp, timestamps[4])
     alma_prof = np.nanmean(alma_polar_cube_rolled, axis=0)
     alma_norm_prof = alma_prof / np.mean(alma_prof) - 1
-    axes[0].plot(theta, alma_norm_prof, zorder=100)
-
-
+    axes[0].plot(theta, alma_norm_prof * 100, c="C3", zorder=100)
+    axes[0].text(
+        0.15, 0.98,
+        r"Mean $Q_\phi \times r^2$",
+        c="C0",
+        fontsize=6,
+        fontweight="bold",
+        transform="axes",
+        ha="left",
+        va="top",
+    )
+    axes[0].text(
+        0.15, 0.9,
+        "ALMA",
+        c="C3",
+        fontsize=6,
+        fontweight="bold",
+        transform="axes",
+        ha="left",
+        va="top",
+    )
 
     for ax in axes:
         ax.axhline(0, c="0.3", zorder=0, lw=1)
-        norm_pa = np.mod(target_info.pos_angle - 90, 360)
-        ax.axvline(norm_pa, lw=1, c="0.8")
-        ax.axvline(norm_pa - 180, lw=1, c="0.8")
 
     ## sup title
     axes.format(
         xlabel="Angle E of N (°)",
         xlocator=90,
+        yformatter="percent"
     )
 
     # axes[:-1].format(xtickloc="none")

@@ -31,8 +31,11 @@ if __name__ == "__main__":
     pro.rc["cycle"] = "ggplot"
 
     ## Plot and save
+    width = 3.31314
+    aspect_ratio = 1/1.6
+    height = width * aspect_ratio
     fig, axes = pro.subplots(
-        width="3.33in", height=f"{3.33/1.6}in"
+        width=f"{width}in", height=f"{height}in"
     )
 
     folders = [
@@ -42,7 +45,7 @@ if __name__ == "__main__":
         "20150710_ZIMPOL",
         "20180715_ZIMPOL",
         "20210906_IRDIS",
-        "20230707_VAMPIRES",
+        # "20230707_VAMPIRES",
         "20240729_VAMPIRES",
     ]
     labels = [label_from_folder(f) for f in folders]
@@ -102,7 +105,7 @@ if __name__ == "__main__":
         this_curve = this_curve / this_curve.mean() - 1
 
         dt_yr = (this_time - alma_time).jd / 365.25
-        lags_degs, xcorr = phase_correlogram(this_curve, alma_curve)
+        lags_degs, xcorr = phase_correlogram(alma_curve, this_curve)
         # lags, xcorr, xcorr_err = bootstrap_phase_correlogram(curve2.values, curve2_err.values, curve1.values, curve1_err.values, N=1000)
 
         xcorr_itp = np.interp(common_lags, lags_degs, xcorr)
@@ -113,7 +116,7 @@ if __name__ == "__main__":
     peak_idx = np.argmax(mean_xcorr)
     best_lag = common_lags[peak_idx]
     for xcorr in xcorrs:
-        axes[0].plot(common_lags, xcorr, c="C3", alpha=0.4, zorder=5, lw=0.8)
+        axes[0].plot(common_lags, xcorr, c="C3", alpha=0.6, zorder=5, lw=0.8)
     axes[0].plot(common_lags, mean_xcorr, c="C0", zorder=10)
     axes[0].axvline(best_lag, c="C0", alpha=0.8, zorder=2, lw=1)
     print(f"Peak: {best_lag} (deg)")
@@ -134,7 +137,7 @@ if __name__ == "__main__":
     )
 
     fig.savefig(
-        paths.figures / "HD169142_azimuthal_profiles_crosscorr_alma_corner_corrected_collapsed.pdf",
+        paths.figures / "HD169142_azimuthal_profiles_ALMA_crosscorr.pdf",
         bbox_inches="tight",
     )
 

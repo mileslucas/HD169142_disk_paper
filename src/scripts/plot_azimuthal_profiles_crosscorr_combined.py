@@ -147,6 +147,8 @@ if __name__ == "__main__":
 
     axes.format(
         xlabel="Lag (°/yr)",
+        ylabel="Phase cross-correlation",
+        yformatter="none",
         xlocator=20,
     )
 
