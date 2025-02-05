@@ -5,6 +5,7 @@ from astropy.time import Time
 from scipy import signal
 import itertools
 import numpy as np
+from utils_crosscorr import bootstrap_phase_correlogram, phase_correlogram
 
 
 def time_from_folder(foldername: str):
@@ -15,37 +16,6 @@ def time_from_folder(foldername: str):
         "day": int(date_raw[6:])
     }
     return Time(ymd, format="ymdhms")
-
-# def cross_correlate(curve1, time1: str, curve2, time2: str):
-#     time_delta = time_from_folder(time2) - time_from_folder(time1)
-#     time_delta_yr = time_delta.jd / 365.25 # days to years
-    
-#     cross_corr = signal.correlate(curve1, curve2, mode="full")
-#     # cross_corr /= cross_corr.max()
-#     lags_inds = signal.correlation_lags(len(curve1), len(curve2))
-#     # bin_width in azimuthal profile is 5 deg
-#     lags_deg_per_yr = -lags_inds * 5 / time_delta_yr
-#     return lags_deg_per_yr, cross_corr
-
-def cross_correlate(curve1, time1: str, curve2, time2: str):
-    time_delta = time_from_folder(time1) - time_from_folder(time2)
-    time_delta_yr = time_delta.jd / 365.25 # days to years
-
-    fft1 = np.fft.fft(curve1)
-    fft2 = np.fft.fft(curve2)
-
-    R = fft1 * fft2.conj()
-    r = np.fft.ifft(R)
-    cross_corr = np.real(np.fft.fftshift(r))
-    # cross_corr /= cross_corr.max()
-    # lags_inds = signal.correlation_lags(len(curve1), len(curve2))
-
-    lags_inds = np.arange(-len(curve1)//2, len(curve2)//2)
-    # lags_inds = 1 / np.fft.fftshift(np.fft.fftfreq(len(curve1)))
-    # bin_width in azimuthal profile is 5 deg
-    lags_deg_per_yr = lags_inds * 5 / time_delta_yr
-    return lags_deg_per_yr, cross_corr
-
 
 def label_from_folder(foldername):
     tokens = foldername.split("_")
@@ -73,7 +43,7 @@ if __name__ == "__main__":
     ]
     labels = [label_from_folder(f) for f in folders]
 
-    curves: dict[str, list] = {"inner": [], "outer": []}
+    curves: dict[str, list] = {"inner": [], "inner_err": [], "outer": [], "outer_err": []}
 
     # colors = [f"C{i}" for i in range(len(folders))]
     color_map = {"inner": "C0", "outer": "C1"}
@@ -93,18 +63,26 @@ if __name__ == "__main__":
 
             values = (values / values.mean() - 1)
             curves[reg_name].append(values)
+            curves[f"{reg_name}_err"].append(errs / values.mean())
 
     # combs_inner = list(itertools.combinations(curves["inner"], 2))
     for col_idx in range(len(folders) - 1):
         curve1 = curves["inner"][col_idx]
+        curve1_err = curves["inner_err"][col_idx]
         folder1 = folders[col_idx]
+        time1 = time_from_folder(folder1)
         for row_idx in range(col_idx, len(folders)):
             if row_idx == col_idx:
                 continue
             curve2 = curves["inner"][row_idx]
+            curve2_err = curves["inner_err"][row_idx]
             folder2 = folders[row_idx]
-            lags, xcorr = cross_correlate(curve2, folder2, curve1, folder1)
-            axes[row_idx - 1, col_idx].plot(lags, xcorr, c="C0")
+            time2 = time_from_folder(folder2)
+            dt_yr = (time2 - time1).jd / 365.25
+            lags, xcorr = phase_correlogram(curve2.values, curve1.values)
+            # lags, xcorr, xcorr_err = bootstrap_phase_correlogram(curve2.values, curve2_err.values, curve1.values, curve1_err.values, N=1000)
+            lags_degs_per_yr = lags / dt_yr
+            axes[row_idx - 1, col_idx].plot(lags_degs_per_yr, xcorr, c="C0")
     
 
     # for col_idx in range(len(folders) - 1):

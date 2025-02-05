@@ -15,7 +15,7 @@ def label_from_folder(foldername):
 
 if __name__ == "__main__":
     pro.rc["font.size"] = 8
-    pro.rc["title.size"] = 9
+    pro.rc["title.size"] = 8
     pro.rc["figure.dpi"] = 300
     pro.rc["cycle"] = "ggplot"
 
@@ -26,6 +26,7 @@ if __name__ == "__main__":
         "20150710_ZIMPOL",
         "20180715_ZIMPOL",
         "20210906_IRDIS",
+        # "20230604_CHARIS",
         "20230707_VAMPIRES",
         "20240729_VAMPIRES",
     ]
@@ -95,9 +96,9 @@ if __name__ == "__main__":
         # baseline
         ax.axhline(0, c="0.3", lw=1, zorder=0)
         # disk markers
-        norm_pa = np.mod(target_info.pos_angle - 90, 360)
-        ax.axvline(norm_pa, c="0.5", lw=0.5, zorder=0)
-        ax.axvline(norm_pa - 180, c="0.5", lw=0.5, zorder=0)
+        # norm_pa = np.mod(target_info.pos_angle - 90, 360)
+        # ax.axvline(norm_pa, c="0.5", lw=0.5, zorder=0)
+        # ax.axvline(norm_pa - 180, c="0.5", lw=0.5, zorder=0)
 
     for i, label in enumerate(labels):
         row = 0 if i < 4 else 2

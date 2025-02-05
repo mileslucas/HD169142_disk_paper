@@ -1,6 +1,8 @@
 import numpy as np
 from target_info import target_info
 
+np.random.seed(169142)
+
 _DEG_PER_PX = 5
 
 def phase_correlogram(signal, ref_signal):
@@ -18,54 +20,19 @@ def phase_correlogram(signal, ref_signal):
     return lags_degs, correlogram
 
 
+def bootstrap_phase_correlogram(signal, signal_err, ref_signal, ref_signal_err, N=1000):
+    # assume normally distributed errorss
+    signal_samples = signal[None, :] + np.random.randn(N)[:, None] * signal_err[None, :]
+    ref_signal_samples = ref_signal[None, :] + np.random.randn(N)[:, None] * ref_signal_err[None, :]
 
-if __name__ == "__main__":
-    from astropy.io import fits
-    import paths
+    lags = []
+    correlograms = []
+    for _signal, _ref in zip(signal_samples, ref_signal_samples, strict=True):
+        lags_degs, corr = phase_correlogram(_signal, _ref)
+        lags.append(lags_degs)
+        correlograms.append(corr)
 
-    folders = [
-        "20120726_NACO",
-        "20140425_GPI",
-        "20150503_IRDIS",
-        "20150710_ZIMPOL",
-        "20180715_ZIMPOL",
-        "20210906_IRDIS",
-        "20230707_VAMPIRES",
-        "20240729_VAMPIRES",
-    ]
-
-    pxscales = {
-        "20120726_NACO": 27e-3,
-        "20140425_GPI": 14.14e-3,
-        "20150503_IRDIS": 12.25e-3,
-        "20150710_ZIMPOL": 3.6e-3,
-        "20180715_ZIMPOL": 3.6e-3,
-        "20230707_VAMPIRES": 5.9e-3,
-        "20210906_IRDIS": 12.25e-3,
-        "20240729_VAMPIRES": 5.9e-3,
-    }
-
-    data = fits.getdata(paths.data / "20140425_GPI" / "20140425_GPI_HD169142_Qphi_polar.fits")
-    data2 = fits.getdata(paths.data / "20210906_IRDIS" / "20210906_IRDIS_HD169142_Qphi_polar.fits")
-
-
-    _rs = np.linspace(15, 35, 50)
-    _thetas = np.arange(0, 360, 5)
-    common_thetas, common_rs = np.meshgrid(_thetas, _rs)
-    
-    im1 = reinterp(data, common_rs, common_thetas, pxscales["20140425_GPI"])
-    im2 = reinterp(data2, common_rs, common_thetas, pxscales["20210906_IRDIS"])
-    
-    lags, corr = phase_correlogram(im2, im1)
-    import matplotlib.pyplot as plt
-    fig, axes = plt.subplots(1)
-
-    kwargs= {"origin": "lower", "cmap": "magma"}
-    # axes[0].imshow(im1, **kwargs)
-    # axes[1].imshow(im2, **kwargs)
-    print(lags.shape)
-    print(corr.shape)
-    axes.plot(lags, np.max(corr, axis=0))#, extent=(lags.min(), lags.max(), 0, corr.shape[0]), **kwargs)
-
-    plt.show(block=True)
-
+    lags_mean = np.mean(lags, axis=0)
+    correlogram_mean = np.mean(correlograms, axis=0)
+    correlograms_std = np.std(correlograms, axis=0)
+    return lags_mean, correlogram_mean, correlograms_std

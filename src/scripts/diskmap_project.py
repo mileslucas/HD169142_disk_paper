@@ -135,17 +135,28 @@ def process_alma_data(folder: str, filename: Path):
     tmp_name = paths.data / folder / "diskmap" / f"{folder}_HD169142_diskmap"
     get_diskmap_outputs(alma_data, name=tmp_name, pxscale=alma_pxscale, rmax=350)
 
+
+def process_charis_data(folder: str, filename: Path):
+    cube, hdr = fits.getdata(
+        filename,
+        header=True,
+    )
+    charis_Qphi = crop(cube, 140)
+    tmp_name = paths.data / folder / "diskmap" / f"{folder}_HD169142_diskmap"
+    get_diskmap_outputs(charis_Qphi, name=tmp_name, pxscale=hdr["YPIXSCAL"]*3.6e3, rmax=300)
+
 if __name__ == "__main__":
     folders = [
-        "20120726_NACO",
-        "20140425_GPI",
-        "20150503_IRDIS",
-        "20150710_ZIMPOL",
-        "20170918_ALMA",
-        "20180715_ZIMPOL",
-        "20210906_IRDIS",
-        "20230707_VAMPIRES",
-        "20240729_VAMPIRES",
+        # "20120726_NACO",
+        # "20140425_GPI",
+        # "20150503_IRDIS",
+        # "20150710_ZIMPOL",
+        # "20170918_ALMA",
+        # "20180715_ZIMPOL",
+        # "20210906_IRDIS",
+        "20230604_CHARIS",
+        # "20230707_VAMPIRES",
+        # "20240729_VAMPIRES",
     ]
     for folder in tqdm.tqdm(folders):
         if "VAMPIRES" in folder:
@@ -169,6 +180,9 @@ if __name__ == "__main__":
         elif "ALMA" in folder:
             filename = paths.data / folder / "HD169142.selfcal.concat.GPU-UVMEM.centered_mJyBeam.fits"
             process_alma_data(folder, filename)
+        elif "CHARIS" in folder:
+            filename = paths.data / folder / f"{folder}_HD169142_Qphi.fits"
+            process_charis_data(folder, filename)
         else:
             print(f"Unrecognized folder: {folder=}")
 

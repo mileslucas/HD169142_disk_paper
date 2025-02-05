@@ -1,2 +1,5 @@
 # Enforce a non-interactive backend
 backend: agg
+figure.dpi: 300
+font.size: 8
+title.size: 8

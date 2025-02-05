@@ -322,6 +322,58 @@ def process_gpi(folder: str) -> None:
     output_name = paths.data / folder / f"{folder}_HD169142_azimuthal_profiles.csv"
     output_df.to_csv(output_name, index=False)
 
+def process_charis(folder: str) -> None:
+    # load data
+    Qphi = fits.getdata(paths.data / folder / f"{folder}_HD169142_Qphi.fits")
+    Uphi = fits.getdata(paths.data / folder / f"{folder}_HD169142_Uphi.fits")
+
+    Qphi = crop(Qphi, 140)
+    Uphi = crop(Uphi, 140)
+
+    radius_map = fits.getdata(
+        paths.data / folder / "diskmap" / f"{folder}_HD169142_diskmap_radius.fits"
+    )
+    azimuth_map = fits.getdata(
+        paths.data / folder / "diskmap" / f"{folder}_HD169142_diskmap_azimuth.fits"
+    )
+    r2_map = radius_map**2
+
+    masks = {
+        "inner": (radius_map > 15) & (radius_map <= 35),
+        "outer": (radius_map > 48) & (radius_map <= 110),
+    }
+
+    Qphi_profiles = []
+    kernel_fwhm = 1
+    kernel = kernels.Gaussian2DKernel(kernel_fwhm / (2 * np.sqrt(2 * np.log(2))))
+    # warp to polar coordinates
+    for mask_name, mask in masks.items():
+        _data = convolve(Qphi, kernel) * r2_map
+        _err = convolve(Uphi, kernel) * r2_map
+        _data[~mask] = np.nan
+        _err[~mask] = np.nan
+        # print(folder, mask_name)
+        # quickplot(_data, _err)
+        info = get_azimuthal_profile(_data, _err, azimuth_map)
+        info["filter"] = "JHK"
+        info["region"] = mask_name
+        Qphi_profiles.append(info)
+
+    Qphi_dataframe = pd.concat(map(pd.DataFrame, Qphi_profiles))
+
+    output_df = pd.DataFrame(
+        {
+            "azimuth(deg)": Qphi_dataframe["azimuth"],
+            "filter": Qphi_dataframe["filter"],
+            "region": Qphi_dataframe["region"],
+            "Qphi": Qphi_dataframe["profile"],
+            "Qphi_err": Qphi_dataframe["error"],
+        }
+    )
+    output_df.dropna(axis=0, how="any", inplace=True)
+    output_name = paths.data / folder / f"{folder}_HD169142_azimuthal_profiles.csv"
+    output_df.to_csv(output_name, index=False)
+
 
 def process_alma(folder: str) -> None:
     # load data
@@ -342,12 +394,10 @@ def process_alma(folder: str) -> None:
     Qphi_profiles = []
     # warp to polar coordinates
     for mask_name, mask in masks.items():
-        _data = frame
-        _err = np.sqrt(frame)
+        _data = frame.copy()
+        _err = np.sqrt(np.abs(frame))
         _data[~mask] = np.nan
         _err[~mask] = np.nan
-        # print(folder, mask_name)
-        # quickplot(_data, _err)
         info = get_azimuthal_profile(_data, _err, azimuth_map)
         info["filter"] = "1.3mm"
         info["region"] = mask_name
@@ -370,15 +420,16 @@ def process_alma(folder: str) -> None:
 
 if __name__ == "__main__":
     folders = [
-        "20120726_NACO",
-        "20140425_GPI",
-        "20150503_IRDIS",
-        "20150710_ZIMPOL",
+        # "20120726_NACO",
+        # "20140425_GPI",
+        # "20150503_IRDIS",
+        # "20150710_ZIMPOL",
         "20170918_ALMA",
-        "20180715_ZIMPOL",
-        "20210906_IRDIS",
-        "20230707_VAMPIRES",
-        "20240729_VAMPIRES",
+        # "20180715_ZIMPOL",
+        # "20210906_IRDIS",
+        # "20230604_CHARIS",
+        # "20230707_VAMPIRES",
+        # "20240729_VAMPIRES",
     ]
     for i, folder in enumerate(tqdm.tqdm(folders)):
         if "VAMPIRES" in folder:
@@ -393,5 +444,7 @@ if __name__ == "__main__":
             process_gpi(folder)
         elif "ALMA" in folder:
             process_alma(folder)
+        elif "CHARIS" in folder:
+            process_charis(folder)
         else:
             print(f"Folder not recognized: {folder=}")
