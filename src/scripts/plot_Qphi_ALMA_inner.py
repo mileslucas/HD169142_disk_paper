@@ -1,11 +1,10 @@
 import paths
 from astropy.io import fits
-from utils_plot_mosaic import plot_mosaic, plot_rdi_mosaic
 import numpy as np
 import proplot as pro
 from astropy.visualization import simple_norm
-from matplotlib import ticker
-from target_info import target_info
+from utils_organization import label_from_folder, folders, pxscales
+from utils_plots import setup_rc
 
 def inner_ring_mask(frame, radii):
     rin_au = 15
@@ -14,52 +13,18 @@ def inner_ring_mask(frame, radii):
     return np.where(rad_mask, frame, np.nan)
 
 if __name__ == "__main__":
-    iwas = {
-        "20230707": 105,
-        "20240727": 59,
-        "20240728": 59,
-        "20240729": 59
-    }
-    pxscale = 5.9e-3
-    dist = 114.8
+    setup_rc()
+    pro.rc["axes.facecolor"] = "k"
+    pro.rc["axes.grid"] = False
 
-
-    alma_data, alma_hdr = fits.getdata(paths.data / "HD169142.selfcal.concat.GPU-UVMEM.centered_mJyBeam.fits", header=True)
+    alma_data, alma_hdr = fits.getdata(paths.data / "20170918_ALMA_1.3mm" / "HD169142.selfcal.concat.GPU-UVMEM.centered_mJyBeam.fits", header=True)
     alma_pxscale = np.abs(alma_hdr["CDELT1"]) * 3.6e3 # arcsec / px
     alma_side_length = alma_data.shape[-1] * alma_pxscale / 2
     alma_ext = (alma_side_length, -alma_side_length, -alma_side_length, alma_side_length)
     alma_ys = np.linspace(alma_ext[0], alma_ext[1], alma_data.shape[0])
     alma_xs = np.linspace(alma_ext[2], alma_ext[3], alma_data.shape[1])
 
-    folders = [
-        "20120726_NACO",
-        "20140425_GPI",
-        "20150503_IRDIS",
-        "20150710_ZIMPOL",
-        "20180715_ZIMPOL",
-        "20210906_IRDIS",
-        "20230707_VAMPIRES",
-        "20240729_VAMPIRES",
-    ]
-    def label_from_folder(foldername):
-        tokens = foldername.split("_")
-        date = f"{tokens[0][:4]}/{tokens[0][4:6]}/{tokens[0][6:]}"
-        return f"{date} {tokens[1]}"
-
-    labels = [label_from_folder(f) for f in folders]
-
-    pxscales = {
-        "20120726_NACO": 27e-3,
-        "20140425_GPI": 14.14e-3,
-        "20150503_IRDIS": 12.25e-3,
-        "20150710_ZIMPOL": 3.6e-3,
-        "20180715_ZIMPOL": 3.6e-3,
-        "20230707_VAMPIRES": 5.9e-3,
-        "20210906_IRDIS": 12.25e-3,
-        "20240729_VAMPIRES": 5.9e-3,
-    }
-
-    fig, axes = pro.subplots(ncols=4, nrows=2, width="7in", wspace=0.5, spanx=False)
+    fig, axes = pro.subplots(ncols=4, nrows=2, width="7in", hspace=1.75, wspace=0.5, spanx=False)
 
 
     for i, folder in enumerate(folders):
@@ -76,7 +41,25 @@ if __name__ == "__main__":
         vmax = np.nanmax(Qphi_image_masked)
         norm = simple_norm(Qphi_image, vmin=0, vmax=vmax, stretch="asinh", asinh_a=0.5)
         axes[i].imshow(Qphi_image, extent=ext, origin="lower", cmap="bone", norm=norm, vmin=norm.vmin, vmax=norm.vmax)
-        axes[i].format(title=labels[i])
+        labels = label_from_folder(folder).split()
+        axes[i].text(
+            0.03, 1.01, labels[0],
+            transform="axes",
+            c="0.3",
+            fontsize=pro.rc["title.size"],
+            fontweight="bold",
+            ha="left",
+            va="bottom"
+        )
+        axes[i].text(
+            0.99, 1.01, " ".join(labels[1:]),
+            transform="axes",
+            c="0.3",
+            fontsize=pro.rc["title.size"],
+            fontweight="bold",
+            ha="right",
+            va="bottom"
+        )
 
 
     axes.format(
@@ -86,7 +69,6 @@ if __name__ == "__main__":
         # ylocator=[-0.6, -0.3, 0, 0.3, 0.6],
         # xlabel=r'$\Delta$RA (")',
         # ylabel=r'$\Delta$DEC (")',
-        toplabelsize=7,
         xlocator="none",
         ylocator="none"
     )

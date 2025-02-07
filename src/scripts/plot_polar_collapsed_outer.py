@@ -2,55 +2,17 @@ import proplot as pro
 import numpy as np
 import paths
 from astropy.io import fits
-from skimage.transform import warp_polar
-from astropy.convolution import convolve, kernels
 import tqdm
 from astropy.visualization import simple_norm
 from target_info import target_info
-
-
-def label_from_folder(foldername):
-    tokens = foldername.split("_")
-    date = f"{tokens[0][:4]}/{tokens[0][4:6]}/{tokens[0][6:]}"
-    return f"{date} {tokens[1]}"
-
+from utils_organization import label_from_folder, folders, pxscales
+from utils_plots import setup_rc
 
 if __name__ == "__main__":
-    pro.rc["image.origin"] = "lower"
-    pro.rc["image.cmap"] = "bone"
+    setup_rc()
     pro.rc["axes.grid"] = False
     pro.rc["axes.facecolor"] = "k"
-    pro.rc["font.size"] = 8
-    pro.rc["title.size"] = 9
-
-    folders = [
-        "20120726_NACO",
-        "20140425_GPI",
-        "20150503_IRDIS",
-        "20150710_ZIMPOL",
-        "20180715_ZIMPOL",
-        "20210906_IRDIS",
-        "20230707_VAMPIRES",
-        "20240729_VAMPIRES",
-    ]
-    iwas = {
-        "20230707_VAMPIRES": 105,
-        "20240727_VAMPIRES": 59,
-        "20240728_VAMPIRES": 59,
-        "20240729_VAMPIRES": 59
-    }
-
-    pxscales = {
-        "20120726_NACO": 27e-3,
-        "20140425_GPI": 14.14e-3,
-        "20150503_IRDIS": 12.25e-3,
-        "20150710_ZIMPOL": 3.6e-3,
-        "20180715_ZIMPOL": 3.6e-3,
-        "20230707_VAMPIRES": 5.9e-3,
-        "20210906_IRDIS": 12.25e-3,
-        "20240729_VAMPIRES": 5.9e-3,
-    }
-
+    
     ## Plot and save
     width = 3.31314
     aspect_ratio = 1 / (3 * 1.61803)
@@ -58,9 +20,6 @@ if __name__ == "__main__":
     fig, axes = pro.subplots(
         nrows=8, width=f"{width}in", refheight=f"{height}in", hspace=0.5
     )
-
-    def format_date(date):
-        return f"{date[:4]}/{date[4:6]}"
 
     for i, folder in enumerate(tqdm.tqdm(folders)):
     # load data
@@ -86,18 +45,12 @@ if __name__ == "__main__":
         # axes[0].colorbar(im)
         labels = label_from_folder(folder).split()
         axes[i].text(
-            0.01, 0.95, labels[0], transform="axes", c="white", ha="left", va="top", fontsize=8, fontweight="bold"
+            0.01, 0.95, labels[0], transform="axes", c="white", ha="left", va="top",  fontweight="bold"
         )
         axes[i].text(
-            0.99, 0.95, labels[1], transform="axes", c="white", ha="right", va="top", fontsize=8, fontweight="bold"
+            0.99, 0.95, " ".join(labels[1:]), transform="axes", c="white", ha="right", va="top",  fontweight="bold"
         )
 
-        # axes[i].axhline(iwas[folder] / 1e3 * dist, c="w", alpha=0.4)
-
-    # for ax in axes:
-    #     norm_pa = np.mod(target_info.pos_angle - 90, 360)
-    #     ax.axvline(norm_pa, lw=1, c="0.8")
-    #     ax.axvline(norm_pa - 180, lw=1, c="0.8")
 
     ## sup title
     axes.format(

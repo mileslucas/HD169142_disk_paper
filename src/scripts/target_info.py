@@ -7,7 +7,7 @@ class TargetInfo:
     plx = 8.7053e-3  # " +- 0.0268e-3
     inclination = 12.5 # deg
     pos_angle = 5 # deg, location of far side minor axis
-    stellar_mass = 1.65 # Msun
+    stellar_mass = 2 # Msun
 
     @property
     def dist_pc(self):

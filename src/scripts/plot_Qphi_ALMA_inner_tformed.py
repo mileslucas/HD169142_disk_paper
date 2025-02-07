@@ -4,8 +4,7 @@ from utils_plot_mosaic import plot_mosaic, plot_rdi_mosaic
 import numpy as np
 import proplot as pro
 from astropy.visualization import simple_norm
-from matplotlib import ticker
-from target_info import target_info
+from utils_organization import label_from_folder
 
 def inner_ring_mask(frame, radii):
     rin_au = 15

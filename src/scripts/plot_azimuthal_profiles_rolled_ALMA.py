@@ -8,88 +8,31 @@ import tqdm
 from astropy.visualization import simple_norm
 from target_info import target_info
 from astropy import time
-
-
-def solve_kepler_for_period(separation):
-    G = 39.476926408897626 # au^3 / Msun / yr^2
-    M = target_info.stellar_mass
-    T = np.sqrt(separation**3 * 4 * np.pi**2 / (G * M))
-    angular_velocity = 360 / T # deg / yr
-    return angular_velocity
-
-
-def polar_roll_frame(polar_frame, radii_au, time: time.Time, t0: time.Time):
-    delta_t_yr = (time - t0).jd / 365.25
-    angular_velocity = solve_kepler_for_period(radii_au)
-    total_motion = angular_velocity * delta_t_yr
-    total_motion_int = np.round(total_motion / 5).astype(int)
-    # print(delta_t_yr, total_motion_int)
-    # total_motion_int = 
-    output_frame = polar_frame.copy()
-    for i in range(output_frame.shape[0]):
-        output_frame[i] = np.roll(polar_frame[i], (total_motion_int[i], 0))
-    return output_frame
-
-
-def time_from_folder(foldername: str) -> time.Time:
-    date_raw = foldername.split("_")[0]
-    ymd = {
-        "year": int(date_raw[:4]),
-        "month": int(date_raw[4:6]),
-        "day": int(date_raw[6:])
-    }
-    return time.Time(ymd, format="ymdhms")
-
-
-def label_from_folder(foldername):
-    tokens = foldername.split("_")
-    date = f"{tokens[0][:4]}/{tokens[0][4:6]}/{tokens[0][6:]}"
-    return f"{date} {tokens[1]}"
-
+from utils_plots import setup_rc
+from utils_organization import folders, pxscales, time_from_folder
+from utils_ephemerides import keplerian_warp
 
 if __name__ == "__main__": 
-    pro.rc["font.size"] = 8
-    pro.rc["title.size"] = 9
-    pro.rc["figure.dpi"] = 300
-    pro.rc["cycle"] = "ggplot"
+    setup_rc()
 
-    folders = [
-        "20120726_NACO",
-        "20140425_GPI",
-        "20150503_IRDIS",
-        "20150710_ZIMPOL",
-        "20180715_ZIMPOL",
-        "20210906_IRDIS",
-        "20230707_VAMPIRES",
-        "20240729_VAMPIRES",
-    ]
     timestamps = list(map(time_from_folder, folders))
-    iwas = {
-        "20230707_VAMPIRES": 105,
-        "20240727_VAMPIRES": 59,
-        "20240728_VAMPIRES": 59,
-        "20240729_VAMPIRES": 59
-    }
+  
 
-    pxscales = {
-        "20120726_NACO": 27e-3,
-        "20140425_GPI": 14.14e-3,
-        "20150503_IRDIS": 12.25e-3,
-        "20150710_ZIMPOL": 3.6e-3,
-        "20170918_ALMA": 5e-3,
-        "20180715_ZIMPOL": 3.6e-3,
-        "20230707_VAMPIRES": 5.9e-3,
-        "20210906_IRDIS": 12.25e-3,
-        "20240729_VAMPIRES": 5.9e-3,
-    }
+    alma_folder = "20170918_ALMA_1.3mm"
+    alma_polar_cube = fits.getdata(paths.data / alma_folder / f"{alma_folder}_HD169142_Qphi_polar.fits")
+
+    rin = np.floor(15 / target_info.dist_pc / pxscales[alma_folder]).astype(int)
+    rout = np.ceil(35 / target_info.dist_pc / pxscales[alma_folder]).astype(int)
+
+    rs = np.arange(alma_polar_cube.shape[0])
+    mask = (rs >= rin) & (rs <= rout)
+
+    alma_timestamp = time_from_folder(alma_folder)
+    alma_prof = np.nanmean(alma_polar_cube[mask, :], axis=0)
+    alma_norm_prof = alma_prof / np.mean(alma_prof) - 1
 
     ## Plot and save
-    fig, axes = pro.subplots(
-        width="3.33in", refheight="1.5in"
-    )
-
-    def format_date(date):
-        return f"{date[:4]}/{date[4:6]}"
+    fig, axes = pro.subplots(width="3.33in", refheight="1.5in")
 
     profiles = []
 
@@ -111,8 +54,8 @@ if __name__ == "__main__":
 
         mask = (rs >= rin) & (rs <= rout)
         ext = (0, 360, rin * pxscales[folder] * target_info.dist_pc, rout * pxscales[folder] * target_info.dist_pc)
-
-        polar_cube_rolled = polar_roll_frame(polar_cube[mask, :], rs[mask] * target_info.dist_pc * pxscales[folder], timestamps[i], timestamps[4])
+        rs_au = rs[mask] * target_info.dist_pc * pxscales[folder]
+        polar_cube_rolled = keplerian_warp(polar_cube[mask, :], rs_au, timestamps[i], alma_timestamp)
         profile = np.nanmean(polar_cube_rolled, axis=0)
         norm_profile = profile / profile.mean() - 1
         profiles.append(norm_profile)
@@ -124,25 +67,11 @@ if __name__ == "__main__":
     norm_prof = mean_prof# / np.mean(mean_prof) - 1
     axes[0].plot(theta, norm_prof * 100, c="C0", zorder=100)
 
-    alma_folder = "20170918_ALMA"
-    alma_polar_cube = fits.getdata(paths.data / alma_folder / f"{alma_folder}_HD169142_Qphi_polar.fits")
-
-    rin = np.floor(15 / target_info.dist_pc / pxscales[alma_folder]).astype(int)
-    rout = np.ceil(35 / target_info.dist_pc / pxscales[alma_folder]).astype(int)
-
-    rs = np.arange(alma_polar_cube.shape[0])
-    mask = (rs >= rin) & (rs <= rout)
-
-    alma_timestamp = time_from_folder(alma_folder)
-    alma_polar_cube_rolled = polar_roll_frame(alma_polar_cube[mask, :], rs[mask] * target_info.dist_pc * pxscales[alma_folder], alma_timestamp, timestamps[4])
-    alma_prof = np.nanmean(alma_polar_cube_rolled, axis=0)
-    alma_norm_prof = alma_prof / np.mean(alma_prof) - 1
     axes[0].plot(theta, alma_norm_prof * 100, c="C3", zorder=100)
     axes[0].text(
         0.15, 0.98,
         r"Mean $Q_\phi \times r^2$",
         c="C0",
-        fontsize=6,
         fontweight="bold",
         transform="axes",
         ha="left",
@@ -150,9 +79,8 @@ if __name__ == "__main__":
     )
     axes[0].text(
         0.15, 0.9,
-        "ALMA",
+        "ALMA (1.3mm)",
         c="C3",
-        fontsize=6,
         fontweight="bold",
         transform="axes",
         ha="left",

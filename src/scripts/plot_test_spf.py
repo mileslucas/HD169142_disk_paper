@@ -2,7 +2,7 @@ import paths
 import proplot as pro
 import numpy as np
 from target_info import target_info
-
+from utils_plots import setup_rc
 
 def rayleigh(scat_angle, pol_max=1):
     alpha = np.cos(scat_angle)
@@ -19,11 +19,7 @@ def hg(scat_angle, pol_max=1, g=0):
 
 
 if __name__ == "__main__":
-    pro.rc["title.size"] = 9
-    pro.rc["font.size"] = 8
-    pro.rc["label.size"] = 8
-    pro.rc["figure.dpi"] = 300
-    pro.rc["cycle"] = "ggplot"
+    setup_rc()
 
     width = 3.31314
     aspect_ratio = 1 / 1.6
@@ -54,7 +50,6 @@ if __name__ == "__main__":
     axes[0].fill_betweenx(
         axes[0].get_ylim(), min_angle, max_angle, c="C0", alpha=0.2, zorder=0
     )
-    axes[0].legend(ncols=1, fontsize=7)
     axes.format(xlabel="Scattering angle (°)", ylabel="Polarization fraction")
 
     fig.savefig(paths.figures / "test_spf_coverage.pdf", bbox_inches="tight")

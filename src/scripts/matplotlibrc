@@ -1,5 +1,10 @@
 # Enforce a non-interactive backend
 backend: agg
 figure.dpi: 300
-font.size: 8
 title.size: 8
+font.size: 7
+label.size: 7
+legend.fontsize: 6
+cycle: ggplot
+image.origin: lower
+image.cmap: bone

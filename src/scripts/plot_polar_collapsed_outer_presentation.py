@@ -7,50 +7,13 @@ from astropy.convolution import convolve, kernels
 import tqdm
 from astropy.visualization import simple_norm
 from target_info import target_info
-
-
-def label_from_folder(foldername):
-    tokens = foldername.split("_")
-    date = f"{tokens[0][:4]}/{tokens[0][4:6]}/{tokens[0][6:]}"
-    return f"{date} {tokens[1]}"
-
+from utils_organization import folders, pxscales, label_from_folder
+from utils_plots import setup_rc
 
 if __name__ == "__main__":
-    pro.rc["image.origin"] = "lower"
-    pro.rc["image.cmap"] = "bone"
+    setup_rc()
     pro.rc["axes.grid"] = False
     pro.rc["axes.facecolor"] = "k"
-    pro.rc["font.size"] = 8
-    pro.rc["title.size"] = 9
-    pro.rc["figure.dpi"] = 300
-
-    folders = [
-        "20120726_NACO",
-        "20140425_GPI",
-        "20150503_IRDIS",
-        "20150710_ZIMPOL",
-        "20180715_ZIMPOL",
-        "20210906_IRDIS",
-        "20230707_VAMPIRES",
-        "20240729_VAMPIRES",
-    ]
-    iwas = {
-        "20230707_VAMPIRES": 105,
-        "20240727_VAMPIRES": 59,
-        "20240728_VAMPIRES": 59,
-        "20240729_VAMPIRES": 59
-    }
-
-    pxscales = {
-        "20120726_NACO": 27e-3,
-        "20140425_GPI": 14.14e-3,
-        "20150503_IRDIS": 12.25e-3,
-        "20150710_ZIMPOL": 3.6e-3,
-        "20180715_ZIMPOL": 3.6e-3,
-        "20230707_VAMPIRES": 5.9e-3,
-        "20210906_IRDIS": 12.25e-3,
-        "20240729_VAMPIRES": 5.9e-3,
-    }
 
     ## Plot and save
     height = 3.31314
@@ -86,10 +49,10 @@ if __name__ == "__main__":
         # axes[0].colorbar(im)
         labels = label_from_folder(folder).split()
         axes[i].text(
-            0.95, 0.99, labels[0], transform="axes", c="white", ha="right", va="top", fontsize=8, fontweight="bold", rotation=-90
+            0.95, 0.99, labels[0], transform="axes", c="white", ha="right", va="top", fontweight="bold", rotation=-90
         )
         axes[i].text(
-            0.95, 0.01, labels[1], transform="axes", c="white", ha="right", va="bottom", fontsize=8, fontweight="bold", rotation=-90
+            0.95, 0.01, " ".join(labels[1:]), transform="axes", c="white", ha="right", va="bottom", fontweight="bold", rotation=-90
         )
 
         # axes[i].axhline(iwas[folder] / 1e3 * dist, c="w", alpha=0.4)

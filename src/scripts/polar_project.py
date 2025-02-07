@@ -6,31 +6,23 @@ from astropy.convolution import convolve, kernels
 import polarTransform as pt
 from utils_indexing import frame_radii
 from target_info import target_info
+from utils_ephemerides import _DEG_PER_PIXEL
+from utils_organization import pxscales
 
 if __name__ == "__main__":
-    folders = [
-        "20120726_NACO",
-        "20140425_GPI",
-        "20150503_IRDIS",
-        "20150710_ZIMPOL",
-        "20170918_ALMA",
-        "20180715_ZIMPOL",
-        "20210906_IRDIS",
-        "20230707_VAMPIRES",
-        "20240729_VAMPIRES",
-    ]
 
-    pxscales = {
-        "20120726_NACO": 27e-3,
-        "20140425_GPI": 14.14e-3,
-        "20150503_IRDIS": 12.25e-3,
-        "20150710_ZIMPOL": 3.6e-3,
-        "20170918_ALMA": 5e-3,
-        "20180715_ZIMPOL": 3.6e-3,
-        "20230707_VAMPIRES": 5.9e-3,
-        "20210906_IRDIS": 12.25e-3,
-        "20240729_VAMPIRES": 5.9e-3,
-    }
+    folders = [
+        "20120726_NACO_H",
+        "20140425_GPI_J",
+        "20150503_IRDIS_J",
+        "20150710_ZIMPOL_VBB",
+        "20170918_ALMA_1.3mm",
+        "20180715_ZIMPOL_VBB",
+        "20210906_IRDIS_Ks",
+        "20230604_CHARIS_JHK",
+        "20230707_VAMPIRES_MBI",
+        "20240729_VAMPIRES_MBI",
+    ]
     ## Plot and save
 
     names = ["F610", "F670", "F720", "F760"]
@@ -60,7 +52,7 @@ if __name__ == "__main__":
 
         polar_frame, polar_settings = pt.convertToPolarImage(
             np.rot90(np.nan_to_num(frame * radii**2)),
-            angleSize=360//5,  # 3 degree per bin
+            angleSize=360//_DEG_PER_PIXEL,  # 5 degree per bin
             initialRadius=0,
             finalRadius=max_rad,
             radiusSize=max_rad,

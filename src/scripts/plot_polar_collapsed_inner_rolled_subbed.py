@@ -10,68 +10,21 @@ from target_info import target_info
 from utils_ephemerides import blob_c_position, blob_d_position, keplerian_warp
 from astropy import time
 
-
-def label_from_folder(foldername):
-    tokens = foldername.split("_")
-    date = f"{tokens[0][:4]}/{tokens[0][4:6]}/{tokens[0][6:]}"
-    return f"{date} {tokens[1]}"
-
-def time_from_folder(foldername: str) -> time.Time:
-    date_raw = foldername.split("_")[0]
-    ymd = {
-        "year": int(date_raw[:4]),
-        "month": int(date_raw[4:6]),
-        "day": int(date_raw[6:])
-    }
-    return time.Time(ymd, format="ymdhms")
-
+from utils_organization import folders, pxscales, time_from_folder, label_from_folder
+from utils_plots import setup_rc
 
 if __name__ == "__main__":
-    pro.rc["image.origin"] = "lower"
+    setup_rc()
     pro.rc["axes.grid"] = False
     pro.rc["axes.facecolor"] = "w"
-    pro.rc["font.size"] = 8
-    pro.rc["title.size"] = 9
-    pro.rc["figure.dpi"] = 300
-
-    folders = [
-        "20120726_NACO",
-        "20140425_GPI",
-        "20150503_IRDIS",
-        "20150710_ZIMPOL",
-        "20180715_ZIMPOL",
-        "20210906_IRDIS",
-        "20230707_VAMPIRES",
-        "20240729_VAMPIRES",
-    ]
-    iwas = {
-        "20230707_VAMPIRES": 105,
-        "20240727_VAMPIRES": 59,
-        "20240728_VAMPIRES": 59,
-        "20240729_VAMPIRES": 59
-    }
-
-    pxscales = {
-        "20120726_NACO": 27e-3,
-        "20140425_GPI": 14.14e-3,
-        "20150503_IRDIS": 12.25e-3,
-        "20150710_ZIMPOL": 3.6e-3,
-        "20180715_ZIMPOL": 3.6e-3,
-        "20230707_VAMPIRES": 5.9e-3,
-        "20210906_IRDIS": 12.25e-3,
-        "20240729_VAMPIRES": 5.9e-3,
-    }
 
     ## Plot and save
     width = 3.31314
     aspect_ratio = 1 / (3 * 1.61803)
-    height = width * aspect_ratio
+    refheight = width * aspect_ratio
     fig, axes = pro.subplots(
-        nrows=8, width=f"{width}in", refheight=f"{height}in", hspace=0.5
+        nrows=8, width=f"{width}in", refheight=f"{refheight}in", hspace=0.5
     )
-
-    def format_date(date):
-        return f"{date[:4]}/{date[4:6]}"
 
     timestamps = list(map(time_from_folder, folders))
 
@@ -111,10 +64,10 @@ if __name__ == "__main__":
         # axes[0].colorbar(im)
         labels = label_from_folder(folder).split()
         axes[i].text(
-            0.01, 0.95, labels[0], transform="axes", c="0.1 ", ha="left", va="top", fontsize=8, fontweight="bold"
+            0.01, 0.95, labels[0], transform="axes", c="0.1 ", ha="left", va="top", fontweight="bold"
         )
         axes[i].text(
-            0.99, 0.95, labels[1], transform="axes", c="0.1 ", ha="right", va="top", fontsize=8, fontweight="bold"
+            0.99, 0.95, " ".join(labels[1:]), transform="axes", c="0.1 ", ha="right", va="top", fontweight="bold"
         )
 
         # axes[i].axhline(iwas[folder] / 1e3 * dist, c="w", alpha=0.4)

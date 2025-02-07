@@ -10,57 +10,18 @@ from target_info import target_info
 from astropy import time
 from scipy import interpolate
 
+from utils_plots import setup_rc
 from utils_ephemerides import keplerian_warp
-
-def time_from_folder(foldername: str) -> time.Time:
-    date_raw = foldername.split("_")[0]
-    ymd = {
-        "year": int(date_raw[:4]),
-        "month": int(date_raw[4:6]),
-        "day": int(date_raw[6:])
-    }
-    return time.Time(ymd, format="ymdhms")
-
-
-def label_from_folder(foldername):
-    tokens = foldername.split("_")
-    date = f"{tokens[0][:4]}/{tokens[0][4:6]}/{tokens[0][6:]}"
-    return f"{date} {tokens[1]}"
-
+from utils_organization import folders, pxscales, time_from_folder
 
 if __name__ == "__main__": 
-    pro.rc["font.size"] = 8
-    pro.rc["title.size"] = 9
-    pro.rc["cycle"] = "ggplot"
-
-    folders = [
-        "20120726_NACO",
-        "20140425_GPI",
-        "20150503_IRDIS",
-        "20150710_ZIMPOL",
-        "20180715_ZIMPOL",
-        "20210906_IRDIS",
-        # "20230707_VAMPIRES",
-        # "20240729_VAMPIRES",
-    ]
-
-    pxscales = {
-        "20120726_NACO": 27e-3,
-        "20140425_GPI": 14.14e-3,
-        "20150503_IRDIS": 12.25e-3,
-        "20150710_ZIMPOL": 3.6e-3,
-        "20170918_ALMA": 5e-3,
-        "20180715_ZIMPOL": 3.6e-3,
-        "20230707_VAMPIRES": 5.9e-3,
-        "20210906_IRDIS": 12.25e-3,
-        "20240729_VAMPIRES": 5.9e-3,
-    }
+    setup_rc()
 
     common_rs = np.linspace(15, 35, 100)
     common_thetas = np.arange(0, 361)
     thetas_grid, rs_grid = np.meshgrid(common_thetas, common_rs)
 
-    alma_folder = "20170918_ALMA"
+    alma_folder = "20170918_ALMA_1.3mm"
     alma_data = fits.getdata(paths.data / alma_folder / f"{alma_folder}_HD169142_Qphi_polar.fits")
     rs = np.arange(alma_data.shape[0])
     rin = np.floor(15 / target_info.dist_pc / pxscales[alma_folder]).astype(int)
@@ -87,9 +48,6 @@ if __name__ == "__main__":
     fig, axes = pro.subplots(
         width=f"{width}in", height=f"{height}in"
     )
-
-    def format_date(date):
-        return f"{date[:4]}/{date[4:6]}"
 
     images= []
     for i, folder in enumerate(tqdm.tqdm(folders)):
@@ -120,12 +78,10 @@ if __name__ == "__main__":
         data = interpolate.griddata((_rs.ravel(), _ths.ravel()), polar_cube_rolled.ravel(), (rs_grid.ravel(), thetas_grid.ravel()), method="cubic").reshape((len(common_rs), len(common_thetas)))
         images.append(data / np.nanmedian(data))
 
-    
-
 
     data = np.nanmean(images, axis=0)
     # PDI images
-    levels = np.nanpercentile(data, [80, 90, 99])
+    levels = np.nanpercentile(data, [80, 90, 96.5])
     im = axes[0].contour(thetas_grid, rs_grid, data, c="C0", levels=levels, zorder=10)
 
     levels = np.nanpercentile(alma_data, [60, 75, 90])
@@ -135,7 +91,6 @@ if __name__ == "__main__":
         0.98, 0.02,
         r"Mean $Q_\phi \times r^2$",
         c="C0",
-        fontsize=6,
         fontweight="bold",
         transform="axes",
         ha="right",
@@ -143,9 +98,8 @@ if __name__ == "__main__":
     )
     axes[0].text(
         0.98, 0.98,
-        "ALMA",
+        "ALMA (1.3mm)",
         c="C3",
-        fontsize=6,
         fontweight="bold",
         transform="axes",
         ha="right",

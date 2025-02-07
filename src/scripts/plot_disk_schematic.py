@@ -1,16 +1,13 @@
 import paths
 import proplot as pro
 from matplotlib import patches
-
+from utils_plots import setup_rc
 
 if __name__ == "__main__":
-    pro.rc["font.size"] = 8
-    pro.rc["title.size"] = 9
-    pro.rc["grid"] = False
-    pro.rc["cycle"] = "ggplot"
-    pro.rc["figure.dpi"] = 300
+    setup_rc()
 
-    width = 3.5
+    width = 3.31314
+
     fig, ax = pro.subplots(width=f"{width}in")
 
     ## alma
@@ -73,7 +70,7 @@ if __name__ == "__main__":
     ax.text(bar_location + bar_width_au/2, -95 + 3, f"{bar_width_au} au", ha="center", va="bottom")
 
 
-    ax.format(xlim=(-110, 110), ylim=(-110, 100))
+    ax.format(xlim=(-110, 110), ylim=(-110, 100), grid=False)
     ax.axis("off")
 
     fig.savefig(paths.figures / "HD169142_schematic.pdf", bbox_inches="tight")

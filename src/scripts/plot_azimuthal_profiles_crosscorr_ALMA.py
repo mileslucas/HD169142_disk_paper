@@ -126,7 +126,6 @@ if __name__ == "__main__":
         ax.axhline(0, c="0.3", lw=1, zorder=0)
         ax.axvline(0, c="0.3", lw=1, zorder=0)
 
-    # axes[-1].legend(ncols=1, fontsize=8, order="F")
 
     axes.format(
         xlim=(-90, 90),

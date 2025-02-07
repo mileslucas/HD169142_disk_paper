@@ -3,36 +3,17 @@ import paths
 import numpy as np
 import pandas as pd
 from target_info import target_info
-
-## Plot and save
-
-
-def label_from_folder(foldername):
-    tokens = foldername.split("_")
-    date = f"{tokens[0][:4]}/{tokens[0][4:6]}/{tokens[0][6:]}"
-    return f"{date} {tokens[1]}"
+from utils_errorprop import relative_deviation
+from utils_organization import folders, label_from_folder
+from utils_plots import setup_rc
 
 
 if __name__ == "__main__":
-    pro.rc["font.size"] = 8
-    pro.rc["title.size"] = 8
-    pro.rc["figure.dpi"] = 300
-    pro.rc["cycle"] = "ggplot"
+    setup_rc()
 
-    folders = [
-        "20120726_NACO",
-        "20140425_GPI",
-        "20150503_IRDIS",
-        "20150710_ZIMPOL",
-        "20180715_ZIMPOL",
-        "20210906_IRDIS",
-        # "20230604_CHARIS",
-        "20230707_VAMPIRES",
-        "20240729_VAMPIRES",
-    ]
     ## Plot and save
     fig, axes = pro.subplots(
-        nrows=4, ncols=len(folders)//2, width="7in", height=f"{7 / (1.25 * 1.61803)}in", wspace=0.75, hspace=(0, 3, 0)
+        nrows=4, ncols=len(folders)//2, width="7in", height=f"{7 / (1.25 * 1.61803)}in", wspace=0.75, hspace=(0, 2.25, 0)
     )
 
     labels = [label_from_folder(f) for f in folders]
@@ -57,15 +38,32 @@ if __name__ == "__main__":
             else:
                 axes_row = 2 + ax_map[reg_name]
                 axes_col = folder_idx % 4
-            values, errs = group["Qphi"], group["Qphi_err"]
-            norm_val = values.max()
-            mean_val = values.mean()
+            values, error = relative_deviation(group["Qphi"], group["Qphi_err"])
             axes[axes_row, axes_col].plot(
                 group["azimuth(deg)"],
-                (values / mean_val - 1) * 100,
-                # shadedata = errs / mean_val * 100,
+                values * 100,
+                shadedata = error * 100,
                 c=color_map[reg_name],
             )
+
+        
+        labels = label_from_folder(folder).split()
+        axes[axes_row, axes_col].text(
+            0.03, 1.01, labels[0],
+            transform="axes",
+            c="0.3",
+            fontweight="bold",
+            ha="left",
+            va="bottom"
+        )
+        axes[axes_row, axes_col].text(
+            0.99, 1.01, " ".join(labels[1:]),
+            transform="axes",
+            c="0.3",
+            fontweight="bold",
+            ha="right",
+            va="bottom"
+        )
 
 
     for i in (0, 2):
@@ -74,7 +72,6 @@ if __name__ == "__main__":
             0.95,
             "Outer",
             c="C3",
-            fontsize=7,
             fontweight="bold",
             transform="axes",
             ha="left",
@@ -85,7 +82,6 @@ if __name__ == "__main__":
             0.95,
             "Inner",
             c="C0",
-            fontsize=7,
             fontweight="bold",
             transform="axes",
             ha="left",
@@ -99,13 +95,6 @@ if __name__ == "__main__":
         # norm_pa = np.mod(target_info.pos_angle - 90, 360)
         # ax.axvline(norm_pa, c="0.5", lw=0.5, zorder=0)
         # ax.axvline(norm_pa - 180, c="0.5", lw=0.5, zorder=0)
-
-    for i, label in enumerate(labels):
-        row = 0 if i < 4 else 2
-        col = i % 4
-        axes[row, col].format(title=label)
-
-    # axes[-1].legend(ncols=1, fontsize=8, order="F")
 
     axes.format(
         xlabel="Azimuth (° East of North)",

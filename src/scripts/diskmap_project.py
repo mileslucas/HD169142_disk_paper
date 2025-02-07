@@ -147,20 +147,20 @@ def process_charis_data(folder: str, filename: Path):
 
 if __name__ == "__main__":
     folders = [
-        # "20120726_NACO",
-        # "20140425_GPI",
-        # "20150503_IRDIS",
-        # "20150710_ZIMPOL",
-        # "20170918_ALMA",
-        # "20180715_ZIMPOL",
-        # "20210906_IRDIS",
-        "20230604_CHARIS",
-        # "20230707_VAMPIRES",
-        # "20240729_VAMPIRES",
+        "20120726_NACO_H",
+        "20140425_GPI_J",
+        "20150503_IRDIS_J",
+        "20150710_ZIMPOL_VBB",
+        "20170918_ALMA_1.3mm",
+        "20180715_ZIMPOL_VBB",
+        "20210906_IRDIS_Ks",
+        "20230604_CHARIS_JHK",
+        "20230707_VAMPIRES_MBI",
+        "20240729_VAMPIRES_MBI",
     ]
     for folder in tqdm.tqdm(folders):
         if "VAMPIRES" in folder:
-            date = folder.replace("_VAMPIRES", "")
+            date = folder.split("_")[0]
             filename = (
                 paths.data / folder / "optimized" / f"{date}_HD169142_vampires_stokes_cube_optimized.fits"
             )

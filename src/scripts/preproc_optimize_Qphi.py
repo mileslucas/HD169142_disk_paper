@@ -10,9 +10,9 @@ logger = logging.getLogger(__file__)
 
 
 input_files = [
-    paths.data / "20230707_VAMPIRES" / "20230707_HD169142_vampires_stokes_cube.fits",
-    paths.data / "20240727_VAMPIRES" / "20240727_HD169142_vampires_stokes_cube.fits",
-    paths.data / "20240729_VAMPIRES" / "20240729_HD169142_vampires_stokes_cube.fits",
+    paths.data / "20230707_VAMPIRES_MBI" / "20230707_HD169142_vampires_stokes_cube.fits",
+    paths.data / "20240727_VAMPIRES_MBI" / "20240727_HD169142_vampires_stokes_cube.fits",
+    paths.data / "20240729_VAMPIRES_MBI" / "20240729_HD169142_vampires_stokes_cube.fits",
 ]
 
 for path in tqdm.tqdm(input_files):
