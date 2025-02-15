@@ -88,6 +88,9 @@ if __name__ == "__main__":
     norm_val = np.nanmax(mean_xcorr_inner)
 
     x0, x0err = bootstrap_peak(common_lag, mean_xcorr_inner, mean_xcorr_inner_err)
+    _file_lines = [
+        
+    ]
     print(f"Inner ring peak correlation: {x0}+-{x0err} deg/yr")
 
     axes[0].plot(common_lag, mean_xcorr_inner/norm_val, shadedata=mean_xcorr_inner_err/norm_val)

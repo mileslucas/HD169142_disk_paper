@@ -52,14 +52,21 @@ def keplerian_warp(polar_frame, radii_au, time: time.Time, ref_time: time.Time):
     warped_frame = cv2.remap(polar_frame.astype('f4'), theta_new.astype('f4'), r_px.astype('f4'), interpolation=cv2.INTER_LANCZOS4, borderMode=cv2.BORDER_WRAP)
     return warped_frame
 
-def polar_roll_frame(polar_frame, radii_au, time: time.Time, t0: time.Time):
-    delta_t_yr = (time - t0).jd / 365.25
-    angular_velocity = calculate_keplerian_angular_velocity(radii_au)
-    total_motion = angular_velocity * delta_t_yr
-    total_motion_int = np.round(total_motion / 5).astype(int)
-    # print(delta_t_yr, total_motion_int)
-    # total_motion_int = 
-    output_frame = polar_frame.copy()
-    for i in range(output_frame.shape[0]):
-        output_frame[i] = np.roll(polar_frame[i], (total_motion_int[i], 0))
-    return output_frame
+
+def keplerian_warp2d(frame, radii_au, time: time.Time, ref_time: time.Time):
+    delta_t_yr = (time - ref_time).jd / 365.25
+    angular_velocity = calculate_keplerian_angular_velocity(radii_au) # deg / yr
+    if _DISK_DIR == "CW":
+        angular_velocity *= -1
+    total_angular_motion = angular_velocity * delta_t_yr # deg
+        
+    ys, xs = np.indices(frame.shape)
+    cy, cx = np.array(frame.shape) / 2 - 0.5
+    rs = np.hypot(ys - cy, xs - cx)
+    thetas = np.rad2deg(np.arctan2(ys - cy, xs - cx))
+    theta_new = thetas + total_angular_motion
+    ys_new = rs * np.sin(np.deg2rad(theta_new)) + cy
+    xs_new = rs * np.cos(np.deg2rad(theta_new)) + cx
+
+    warped_frame = cv2.remap(frame.astype('f4'), xs_new.astype('f4'), ys_new.astype('f4'), interpolation=cv2.INTER_LANCZOS4, borderMode=cv2.BORDER_WRAP)
+    return warped_frame

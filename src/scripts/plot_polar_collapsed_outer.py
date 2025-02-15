@@ -48,9 +48,12 @@ if __name__ == "__main__":
             0.01, 0.95, labels[0], transform="axes", c="white", ha="left", va="top",  fontweight="bold"
         )
         axes[i].text(
-            0.99, 0.95, " ".join(labels[1:]), transform="axes", c="white", ha="right", va="top",  fontweight="bold"
+            0.99, 0.95, "\n".join(labels[1:]), transform="axes", c="white", ha="right", va="top",  fontweight="bold"
         )
 
+    for ax in axes:
+        for offset in (90, 270):
+            ax.axvline(offset + target_info.pos_angle, c="0.9", lw=1)
 
     ## sup title
     axes.format(

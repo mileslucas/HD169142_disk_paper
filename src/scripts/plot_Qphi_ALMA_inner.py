@@ -5,6 +5,9 @@ import proplot as pro
 from astropy.visualization import simple_norm
 from utils_organization import label_from_folder, folders, pxscales
 from utils_plots import setup_rc
+from matplotlib import patches
+from target_info import target_info
+from utils_indexing import frame_radii
 
 def inner_ring_mask(frame, radii):
     rin_au = 15
@@ -28,10 +31,13 @@ if __name__ == "__main__":
 
 
     for i, folder in enumerate(folders):
-        stokes_path = paths.data / folder / "diskmap" / f"{folder}_HD169142_diskmap_r2_scaled.fits"
+        stokes_path = paths.data / folder / "diskmap" / f"{folder}_HD169142_diskmap_deprojected.fits"
         Qphi_image, header = fits.getdata(stokes_path, header=True)
-        radius_path = paths.data / folder / "diskmap" / f"{folder}_HD169142_diskmap_radius.fits"
-        radius_map_au = fits.getdata(radius_path)
+        # radius_path = paths.data / folder / "diskmap" / f"{folder}_HD169142_diskmap_radius.fits"
+        # radius_map_au = fits.getdata(radius_path)
+
+        radius_map_au = frame_radii(Qphi_image) * pxscales[folder] * target_info.dist_pc
+        
 
         Qphi_image_masked = inner_ring_mask(Qphi_image, radius_map_au)
 
@@ -46,7 +52,6 @@ if __name__ == "__main__":
             0.03, 1.01, labels[0],
             transform="axes",
             c="0.3",
-            fontsize=pro.rc["title.size"],
             fontweight="bold",
             ha="left",
             va="bottom"
@@ -55,11 +60,19 @@ if __name__ == "__main__":
             0.99, 1.01, " ".join(labels[1:]),
             transform="axes",
             c="0.3",
-            fontsize=pro.rc["title.size"],
             fontweight="bold",
             ha="right",
             va="bottom"
         )
+
+        # patch = patches.Circle((0, 0), radius=17 / target_info.dist_pc, ec="w", fill=False, lw=1)
+        # axes[i].add_patch(patch)
+
+        # star position
+        axes[i].scatter(0, 0, marker="+", lw=1, markersize=50, c="white")
+
+        # PSF
+        
 
 
     axes.format(

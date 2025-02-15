@@ -39,7 +39,7 @@ if __name__ == "__main__":
         nrows=2, width=f"{width}in", height=f"{height}in", hspace=0.25
     )
 
-    common_rs = np.linspace(15, 35, 100)
+    common_rs = np.linspace(15, 35, alma_data.shape[0])
     common_thetas = np.arange(0, 361)
     thetas_grid, rs_grid = np.meshgrid(common_thetas, common_rs)
     images= []
@@ -98,7 +98,7 @@ if __name__ == "__main__":
     axes[:-1].format(xtickloc="none")
 
     fig.savefig(
-        paths.figures / "HD169142_polar_median_ALMA.pdf", bbox_inches="tight"
+        paths.figures / "HD169142_polar_median_ALMA_inner.pdf", bbox_inches="tight"
     )
 
 

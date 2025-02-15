@@ -22,8 +22,8 @@ def phase_correlogram(signal, ref_signal):
 
 def bootstrap_phase_correlogram(signal, signal_err, ref_signal, ref_signal_err, N=10000):
     # assume normally distributed errorss
-    signal_samples = signal[None, :] + np.random.randn(N)[:, None] * signal_err[None, :]
-    ref_signal_samples = ref_signal[None, :] + np.random.randn(N)[:, None] * ref_signal_err[None, :]
+    signal_samples = signal[None, :] + np.random.randn(N, len(signal)) * signal_err[None, :]
+    ref_signal_samples = ref_signal[None, :] + np.random.randn(N, len(signal)) * ref_signal_err[None, :]
 
     lags = []
     correlograms = []

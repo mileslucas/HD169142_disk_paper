@@ -47,7 +47,6 @@ if __name__ == "__main__":
             0.03, 1.01, labels[0],
             transform="axes",
             c="0.3",
-            fontsize=pro.rc["title.size"],
             fontweight="bold",
             ha="left",
             va="bottom"
@@ -56,7 +55,6 @@ if __name__ == "__main__":
             0.99, 1.01, " ".join(labels[1:]),
             transform="axes",
             c="0.3",
-            fontsize=pro.rc["title.size"],
             fontweight="bold",
             ha="right",
             va="bottom"

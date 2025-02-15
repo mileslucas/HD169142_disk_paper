@@ -49,9 +49,13 @@ if __name__ == "__main__":
         frame = convolve(deproj_cube, kernels.Gaussian2DKernel(1 / (2 * np.sqrt(2 * np.log(2)))))
 
         max_rad = deproj_cube.shape[-2] // 2
+        if "ALMA" in folder:
+            data = np.rot90(np.nan_to_num(frame))
+        else:
+            data = np.rot90(np.nan_to_num(frame * radii**2))
 
         polar_frame, polar_settings = pt.convertToPolarImage(
-            np.rot90(np.nan_to_num(frame * radii**2)),
+            data,
             angleSize=360//_DEG_PER_PIXEL,  # 5 degree per bin
             initialRadius=0,
             finalRadius=max_rad,

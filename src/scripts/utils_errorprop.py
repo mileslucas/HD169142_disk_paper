@@ -15,14 +15,17 @@ def relative_deviation(signal, error):
 
 def bootstrap_peak(xs, signal, error, N=10000):
     # assume normally distributed errorss
-    signal_samples = signal[None, :] + np.random.randn(N)[:, None] * error[None, :]
+    signal_samples = signal[None, :] + np.random.randn(N, len(signal)) * error[None, :]
 
     peak_xs = []
     for _signal in signal_samples:
         peak_idx = np.nanargmax(_signal)
+
         peak_x = xs[peak_idx]
         peak_xs.append(peak_x)
 
     peak_x = np.mean(peak_xs, axis=0)
     peak_x_std = np.std(peak_xs, axis=0)
+
+
     return peak_x, peak_x_std

@@ -33,7 +33,7 @@ if __name__ == "__main__":
 
         rin = np.floor(15 / target_info.dist_pc / pxscales[folder]).astype(int)
         rout = np.ceil(35 / target_info.dist_pc / pxscales[folder]).astype(int)
-        
+
         rs = np.arange(polar_cube.shape[0])
 
         mask = (rs >= rin) & (rs <= rout)
@@ -49,10 +49,14 @@ if __name__ == "__main__":
             0.95, 0.99, labels[0], transform="axes", c="white", ha="right", va="top", fontweight="bold", rotation=-90
         )
         axes[i].text(
-            0.95, 0.01, " ".join(labels[1:]), transform="axes", c="white", ha="right", va="bottom", fontweight="bold", rotation=-90
+            0.95, 0.01, "\n".join(labels[1:]), transform="axes", c="white", ha="right", va="bottom", fontweight="bold", rotation=-90
         )
 
-    ## sup title    
+    for ax in axes:
+        for offset in (90, 270):
+            ax.axhline(offset + target_info.pos_angle, c="0.9", lw=1)
+
+    ## sup title
     axes.format(
         aspect="auto",
         ylabel="Angle E of N (°)",
@@ -60,7 +64,7 @@ if __name__ == "__main__":
         ylocator=90,
     )
     axes[1:].format(ytickloc="none")
-    
+
 
     fig.savefig(
         paths.figures / "HD169142_polar_collapsed_inner_presentation.pdf", bbox_inches="tight"

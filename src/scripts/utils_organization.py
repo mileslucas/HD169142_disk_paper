@@ -1,4 +1,5 @@
 from astropy import time
+import numpy as np
 
 def label_from_folder(foldername: str) -> str:
     tokens = foldername.split("_")
@@ -30,8 +31,8 @@ folders = [
     # "20170918_ALMA_1.3mm",
     "20180715_ZIMPOL_VBB",
     "20210906_IRDIS_Ks",
-    # "20230604_CHARIS_JHK",
-    "20230707_VAMPIRES_MBI",
+    "20230604_CHARIS_JHK",
+    # "20230707_VAMPIRES_MBI",
     "20240729_VAMPIRES_MBI",
 ]
 
@@ -39,6 +40,19 @@ pxscales = {
     "20120726_NACO_H": 27e-3,
     "20140425_GPI_J": 14.14e-3,
     "20150503_IRDIS_J": 12.25e-3,
+    "20150710_ZIMPOL_VBB": 3.6e-3,
+    "20170918_ALMA_1.3mm": 5e-3,
+    "20180715_ZIMPOL_VBB": 3.6e-3,
+    "20230604_CHARIS_JHK": 15.16e-3,
+    "20230707_VAMPIRES_MBI": 5.9e-3,
+    "20210906_IRDIS_Ks": 12.25e-3,
+    "20240729_VAMPIRES_MBI": 5.9e-3,
+}
+
+fwhm = {
+    "20120726_NACO_H": np.rad2deg(1.65e-6 / 8.1196) * 3.6e3,
+    "20140425_GPI_J": np.rad2deg(1.25e-6 / 8.1196) * 3.6e3,
+    "20150503_IRDIS_J": np.rad2deg(1.25e-6 / 8.1196) * 3.6e3,
     "20150710_ZIMPOL_VBB": 3.6e-3,
     "20170918_ALMA_1.3mm": 5e-3,
     "20180715_ZIMPOL_VBB": 3.6e-3,
