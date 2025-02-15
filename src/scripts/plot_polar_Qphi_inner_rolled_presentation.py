@@ -2,12 +2,13 @@ import proplot as pro
 import numpy as np
 import paths
 from astropy.io import fits
-from skimage.transform import warp_polar
-from astropy.convolution import convolve, kernels
 import tqdm
 from astropy.visualization import simple_norm
+from astropy import time
+
 from target_info import target_info
-from utils_organization import folders, label_from_folder, pxscales
+from utils_ephemerides import keplerian_warp
+from utils_organization import folders, pxscales, time_from_folder, label_from_folder
 from utils_plots import setup_rc
 
 if __name__ == "__main__":
@@ -15,6 +16,7 @@ if __name__ == "__main__":
     pro.rc["axes.grid"] = False
     pro.rc["axes.facecolor"] = "k"
 
+    timestamps = list(map(time_from_folder, folders))
     ## Plot and save
     height = 3.31314
     width = 2.3 * height
@@ -39,10 +41,14 @@ if __name__ == "__main__":
         mask = (rs >= rin) & (rs <= rout)
         ext = (rin * pxscales[folder] * target_info.dist_pc, rout * pxscales[folder] * target_info.dist_pc, 360, 0)
 
+        rs_au = rs[mask] * target_info.dist_pc * pxscales[folder]
+        polar_cube_rolled = keplerian_warp(polar_cube[mask, :], rs_au, timestamps[i], timestamps[4])
+
 
         # PDI images
-        norm = simple_norm(np.flipud(polar_cube[mask, :].T), vmin=0, stretch="sinh", sinh_a=0.5)
-        im = axes[i].imshow(np.flipud(polar_cube[mask, :].T), extent=ext, norm=norm, vmin=norm.vmin, vmax=norm.vmax, cmap=pro.rc["cmap"])
+        data = np.flipud(polar_cube_rolled.T)
+        norm = simple_norm(data, vmin=0, stretch="sinh", sinh_a=0.5)
+        im = axes[i].imshow(data, extent=ext, norm=norm, vmin=norm.vmin, vmax=norm.vmax, cmap=pro.rc["cmap"])
         # axes[0].colorbar(im)
         labels = label_from_folder(folder).split()
         axes[i].text(
@@ -52,9 +58,11 @@ if __name__ == "__main__":
             0.95, 0.01, "\n".join(labels[1:]), transform="axes", c="white", ha="right", va="bottom", fontweight="bold", rotation=-90
         )
 
+
     for ax in axes:
         for offset in (90, 270):
             ax.axhline(offset + target_info.pos_angle, c="0.9", lw=1)
+
 
     ## sup title
     axes.format(
@@ -67,5 +75,5 @@ if __name__ == "__main__":
 
 
     fig.savefig(
-        paths.figures / "HD169142_polar_collapsed_inner_presentation.pdf", bbox_inches="tight"
+        paths.figures / "HD169142_polar_Qphi_inner_rolled_presentation.pdf", bbox_inches="tight"
     )

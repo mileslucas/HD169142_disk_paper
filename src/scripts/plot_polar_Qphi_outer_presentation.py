@@ -70,5 +70,5 @@ if __name__ == "__main__":
 
 
     fig.savefig(
-        paths.figures / "HD169142_polar_collapsed_outer_presentation.pdf", bbox_inches="tight"
+        paths.figures / "HD169142_polar_Qphi_outer_presentation.pdf", bbox_inches="tight"
     )
