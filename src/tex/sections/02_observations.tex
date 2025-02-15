@@ -1,1 +1,80 @@
 \section{Observations\label{sec:observations}}
+
+In this work, we present a combination of new observations of HD 169142 using SCExAO/VAMPIRES alongside previously published, archival datasets from various high-contrast instruments. All observations are presented in the observing log (\autoref{tbl:obslog}).
+
+
+\begin{deluxetable*}{llllccccccl}
+\tabletypesize{\footnotesize}
+\tablehead{
+    \colhead{Date} &
+    \multirow{2}{*}{Instrument} &
+    \multirow{2}{*}{Object} &
+    \multirow{2}{*}{Filter} &
+    \colhead{IWA} &
+    \colhead{pix. scale} &
+    \colhead{DIT} &
+    \colhead{$T_\mathrm{exp}$} &
+    \colhead{Seeing} &
+    \multirow{2}{*}{Ref.} \vspace{-0.75em} \\
+    \colhead{(UTC)} & % date
+    & % inst
+    & % object
+    & % filter
+    \colhead{(mas)} & % iwa
+    \colhead{(mas/pix)} & % pxscale
+    \colhead{(\si{\second})} & % dit
+    \colhead{(\si{min})} & %texp
+    \colhead{('')} & % seeing
+     & % reference
+}
+\tablecaption{Chronologically-ordered observing log.\label{tbl:obslog}}
+\startdata
+\formatdate{26}{07}{2012} & NACO & HD 169142 & H & - & 27 & & & & [1] \\
+\formatdate{25}{04}{2014} & GPI & HD 169142 & J & 184 & 14.14 & 29.1 & 62 & \num{0.85\pm0.27} & [2,3] \\
+\formatdate{03}{05}{2015} & IRDIS & HD 169142 & J & 80 & 12.25 & & & 0.9 & [4] \\ 
+\formatdate{10}{07}{2015} & ZIMPOL & HD 169142 & VBB & - & 3.6 & & & & [5] \\
+\formatdate{15}{07}{2018} & ZIMPOL & HD 169142 & VBB & - & 3.6 & & & & [6]  \\
+\formatdate{06}{09}{2021} & IRDIS & HD 169142 & Ks & 200 & 12.25 & 16 & 34 & & [7] \\
+\formatdate{7}{7}{2023} & VAMPIRES & HD 169142 & MBI & 109 & 5.9 & 1 & 50 & \num{0.83\pm0.21} & [8] \\
+\formatdate{29}{7}{2024} & VAMPIRES & HD 169142 & MBI & 54 & 5.9 & 2 & 108 & \num{0.6\pm0.14} & \\
+\enddata
+\tablecomments{IWA: inner working angle of coronagraph, if present. DIT: detector integration time for each frame. $T_\text{exp}$ total exposure time. Seeing estimates, where present, were retrieved from the reference publication for archival data and the mean and standard deviation DIMM from the Maunakea Weather Center archive for the VAMPIRES observations.}
+\tablerefs{[1]: \citealt{quanz_gaps_2013}, [2]: \citealt{monnier_polarized_2017}, [3]: \citealt{rich_gemini-lights_2022}, [4]: \citealt{pohl_circumstellar_2017}, [5]: \citealt{bertrang_hd_2018}, [6]: \citealt{bertrang_moving_2020}, [7]: \citealt{ren_protoplanetary_2023}, [8]: \citealt{lucas_visible-light_2024-1}}
+\end{deluxetable*}
+
+\subsection{SCExAO/VAMPIRES Observations\label{sec:obs_vampires}}
+
+We observed HD 169142 in 2023 and 2024 using VAMPIRES \citep{norris_vampires_2015,lucas_visible-light_2024-1} on the Subaru Coronagraphic Extreme Adaptive Optics instrument \citep{jovanovic_subaru_2015}. Our observations utilized the new multiband imaging mode (MBI), which produces four broadband images simultaneously. We used the slow detector readout mode for low read noise and the ``slow'' polarimetry mode, which only uses an upstream half-wave plate (HWP) for modulation to correct for instrumental polarization. We used the \SI{105}{mas} inner-working angle (IWA) Lyot coronagraph for the 2023 epoch and the \SI{54}{mas} IWA Lyot coronagraph for the 2024 epoch. For both epochs we use the calibration ``satellite spot'' speckles for alignment and photometric calibration \citep{sahoo_precision_2020}.
+
+We processed the data using the VAMPIRES data processing pipeline\footnote{\url{https://github.com/scexao-org/vampires_dpp}}. The processing steps included dark subtraction, sub-cropping the four MBI fields, frame registration, frame selection, coadding, photometric calibration, and polarimetric differential imaging (PDI). We registered the frames using sub-pixel phase cross-correlation \citep{guizar-sicairos_efficient_2008} with the mean frame of each data cube. We discarded the lowest 25\% of frames from each cube according to the estimated Strehl ratio before median-collapsing the cube into a single frame. The coadded frames are grouped according to their HWP angle, with incomplete groupings discarded. We performed double-difference imaging with a Mueller matrix correction of each group to produce calibrated Stokes I, Q, and U frames for each wavelength. We calculated the azimuthal Stokes $Q_\phi$ and $U_\phi$ \citep{schmid_limb_2006,monnier_multiple_2019},
+\begin{align}
+\begin{split}
+    \label{eqn:az_stokes}
+    Q_\phi &= -Q\cos{\left(2\phi\right)} - U\sin{\left(2\phi\right)} \\
+    U_\phi &= Q\sin{\left(2\phi\right)} - U\cos{\left(2\phi\right)},
+\end{split}
+\end{align}
+where
+\begin{equation}
+    \phi = \arctan{\left( \frac{x_0 - x}{y - y_0} \right)} + \phi_0
+\end{equation}
+in image coordinates. Note, this is equivalent to the angle east of north when data has been derotated.
+Finally, we calculate the linear polarized intensity
+\begin{equation}
+    P = \sqrt{Q^2 + U^2}
+\end{equation}
+and angle of linear polarization
+\begin{equation}
+    \theta = 0.5\arctan{\left(U / Q \right)}.
+\end{equation}
+
+\subsection{Archival Data\label{sec:obs_archive}}
+
+HD 169142 was observed by VLT/NACO in 2012 using its H-band polarimetric mode \citep{quanz_very_2011}. The original data is described in detail in \citet{quanz_gaps_2013}; however, we have used the newly-processed data products from the \texttt{PIPPIN} pipeline \citep{regt_polarimetric_2024}, which uses modern polarimetric data processing techniques in a consistent pipeline purpose-built for NACO. 
+
+The Gemini Planet Imager (GPI; \citealt{macintosh_first_2014}) observed HD 169142 in 2014 using its J-band non-dispersed polarimetric mode. A 999 mas IWA apodized Lyot coronagraph was used for diffraction control. The data is presented in \citet{monnier_polarized_2017} and \citet{rich_gemini-lights_2022}. 
+
+VLT/SPHERE \citep{beuzit_sphere_2019} has observed HD 169142 on numerous occasions with both IRDIS \citep{boer_polarimetric_2020,holstein_polarimetric_2020} and ZIMPOL \citep{schmid_spherezimpol_2018}. In 2015 it was observed with IRDIS at J-band \citep{pohl_circumstellar_2017} and ZIMPOL in their VBB filter, which roughly spans R- to I-band \citep{bertrang_hd_2018,tschudi_quantitative_2021}. In 2018, it was observed by ZIMPOL, again, in the VBB filter \citep{bertrang_moving_2020}. In 2021, HD 169142 was observed with IRDIS at K-band using star-hopping \citep{ren_protoplanetary_2023}.
+
+Lastly, we obtained the high-resolution ALMA \SI{1.3}{\milli\meter} continuum images presented in \citet{perez_dust_2019}.
+
