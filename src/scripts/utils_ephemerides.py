@@ -28,6 +28,7 @@ def blob_d_position(timestamp: time.Time):
     return a, theta
 
 
+
 def calculate_keplerian_angular_velocity(separation):
     # assumes separation is in au
     G = 39.476926408897626 # au^3 / Msun / yr^2

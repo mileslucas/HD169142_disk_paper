@@ -70,9 +70,9 @@ if __name__ == "__main__":
         xlim=(-60, 60),
         xlabel="Lag (°/yr)",
         yformatter="none",
-        leftlabels=("2014 GPI", "2015 IRDIS", "2015 ZIMPOL", "2018 ZIMPOL", "2021 IRDIS", "2023 VAMPIRES", "2024 VAMPIRES"),
+        leftlabels=("2014 GPI", "2015 IRDIS", "2015 ZIMPOL", "2018 ZIMPOL", "2021 IRDIS", "2023 CHARIS", "2024 VAMPIRES"),
     )
-    toplabels=("2012 NACO", "2014 GPI", "2015 IRDIS", "2015 ZIMPOL", "2018 ZIMPOL", "2021 IRDIS", "2023 VAMPIRES")
+    toplabels=("2012 NACO", "2014 GPI", "2015 IRDIS", "2015 ZIMPOL", "2018 ZIMPOL", "2021 IRDIS", "2023 CHARIS")
 
     for idx in range(len(folders) - 1):
         axes[idx, idx].format(title=toplabels[idx], titleweight="bold")

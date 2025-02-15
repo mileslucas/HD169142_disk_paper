@@ -26,8 +26,10 @@ def get_azimuthal_profile(image, image_err, azimuth_deg, bin_width=5) -> dict:
     bins = np.arange(azimuth_ints.min(), azimuth_ints.max() + 1, bin_width)
     counts = []
     errs = []
+    finite_mask = np.isfinite(image)
     for i in range(len(bins) - 1):
-        mask = (azimuth_deg >= bins[i]) & (azimuth_deg <  bins[i + 1]) & np.isfinite(image)
+        mask = (azimuth_deg >= bins[i]) & (azimuth_deg <  bins[i + 1]) & finite_mask
+        
         data = image[mask]
         err = image_err[mask]
         mean = np.mean(data)
@@ -111,7 +113,7 @@ def process_vampires(folder: str) -> None:
             "Qphi_err": Qphi_dataframe["error"],
         }
     )
-    output_df.dropna(axis=0, how="any", inplace=True)
+    # output_df.dropna(axis=0, how="any", inplace=True)
     output_name = paths.data / folder / f"{folder}_HD169142_azimuthal_profiles.csv"
     output_df.to_csv(output_name, index=False)
 
@@ -166,7 +168,7 @@ def process_naco(folder: str) -> None:
             "Qphi_err": Qphi_dataframe["error"],
         }
     )
-    output_df.dropna(axis=0, how="any", inplace=True)
+    # output_df.dropna(axis=0, how="any", inplace=True)
     output_name = paths.data / folder / f"{folder}_HD169142_azimuthal_profiles.csv"
     output_df.to_csv(output_name, index=False)
 
@@ -217,7 +219,7 @@ def process_irdis(folder: str) -> None:
             "Qphi_err": Qphi_dataframe["error"],
         }
     )
-    output_df.dropna(axis=0, how="any", inplace=True)
+    # output_df.dropna(axis=0, how="any", inplace=True)
     output_name = paths.data / folder / f"{folder}_HD169142_azimuthal_profiles.csv"
     output_df.to_csv(output_name, index=False)
 
@@ -267,7 +269,7 @@ def process_zimpol(folder: str) -> None:
             "Qphi_err": Qphi_dataframe["error"],
         }
     )
-    output_df.dropna(axis=0, how="any", inplace=True)
+    # output_df.dropna(axis=0, how="any", inplace=True)
     output_name = paths.data / folder / f"{folder}_HD169142_azimuthal_profiles.csv"
     output_df.to_csv(output_name, index=False)
 
@@ -318,7 +320,7 @@ def process_gpi(folder: str) -> None:
             "Qphi_err": Qphi_dataframe["error"],
         }
     )
-    output_df.dropna(axis=0, how="any", inplace=True)
+    # output_df.dropna(axis=0, how="any", inplace=True)
     output_name = paths.data / folder / f"{folder}_HD169142_azimuthal_profiles.csv"
     output_df.to_csv(output_name, index=False)
 
@@ -370,7 +372,7 @@ def process_charis(folder: str) -> None:
             "Qphi_err": Qphi_dataframe["error"],
         }
     )
-    output_df.dropna(axis=0, how="any", inplace=True)
+    # output_df.dropna(axis=0, how="any", inplace=True)
     output_name = paths.data / folder / f"{folder}_HD169142_azimuthal_profiles.csv"
     output_df.to_csv(output_name, index=False)
 
@@ -414,7 +416,7 @@ def process_alma(folder: str) -> None:
             "I_err": Qphi_dataframe["error"],
         }
     )
-    output_df.dropna(axis=0, how="any", inplace=True)
+    # output_df.dropna(axis=0, how="any", inplace=True)
     output_name = paths.data / folder / f"{folder}_HD169142_azimuthal_profiles.csv"
     output_df.to_csv(output_name, index=False)
 

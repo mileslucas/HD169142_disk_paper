@@ -71,6 +71,8 @@ if __name__ == "__main__":
         data = interpolate.griddata((_rs.ravel(), _ths.ravel()), polar_cube_rolled.ravel(), (rs_grid.ravel(), thetas_grid.ravel()), method="cubic").reshape((len(common_rs), len(common_thetas)))
         images.append(data / np.nanmedian(data))
 
+    axes[0].axhline(20, c="0.9", lw=0.5, alpha=0.8)
+    # axes[1].axhline(20, c="0.9", lw=0.5, alpha=0.8)
 
     norm = simple_norm(alma_data, vmin=0)#, stretch="sinh", sinh_a=0.5)
     im = axes[0].imshow(alma_data, extent=ext, norm=norm, vmin=norm.vmin, vmax=norm.vmax, cmap="magma")

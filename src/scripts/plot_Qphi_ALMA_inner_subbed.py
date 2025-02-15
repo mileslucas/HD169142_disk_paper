@@ -9,6 +9,8 @@ from matplotlib import patches
 from target_info import target_info
 from utils_indexing import frame_radii
 from astropy.stats import biweight_location
+from vampires_dpp.image_processing import derotate_frame
+
 
 def inner_ring_mask(frame, radii):
     rin_au = 15
@@ -24,9 +26,25 @@ def create_radial_profile_image(frame, radii):
     for bin in bins:
         mask = (radii_ints == bin) & np.isfinite(frame)
         data = frame[mask]
-        mean = biweight_location(data)
+        mean = np.nanmean(data)
         count_map[bin] = mean
+    for ridx in range(output.shape[0]):
+        for cidx in range(output.shape[1]):
+            radius = radii[ridx, cidx]
+            bin = np.round(radius).astype(int)
+            value = count_map[bin]
+            output[ridx, cidx] = value
 
+    return output
+
+def create_faux_adi_image(frame, N=100, pa_rot=60):
+    pas = np.linspace(0, pa_rot, N)
+    output = np.empty((N, *frame.shape), dtype=frame.dtype)
+    for idx in range(N):
+        output[idx] = derotate_frame(frame, -pas[idx])
+
+    med_frame = np.nanmedian(output, axis=0, overwrite_input=True)
+    return med_frame
 
 
 if __name__ == "__main__":
@@ -45,22 +63,26 @@ if __name__ == "__main__":
 
 
     for i, folder in enumerate(folders):
-        stokes_path = paths.data / folder / "diskmap" / f"{folder}_HD169142_diskmap_deprojected.fits"
+        stokes_path = paths.data / folder / "diskmap" / f"{folder}_HD169142_diskmap_Qphi_deprojected.fits"
         Qphi_image, header = fits.getdata(stokes_path, header=True)
         # radius_path = paths.data / folder / "diskmap" / f"{folder}_HD169142_diskmap_radius.fits"
         # radius_map_au = fits.getdata(radius_path)
 
         radius_map_au = frame_radii(Qphi_image) * pxscales[folder] * target_info.dist_pc
-        
 
-        Qphi_image_masked = inner_ring_mask(Qphi_image, radius_map_au)
+        # radprof = create_radial_profile_image(Qphi_image, frame_radii(Qphi_image))
+        radprof = create_faux_adi_image(Qphi_image)
+
+        Qphi_image_subbed = Qphi_image - radprof
+
+        Qphi_image_masked = inner_ring_mask(Qphi_image_subbed, radius_map_au)
 
         side_length = Qphi_image.shape[-1] * pxscales[folder] / 2
         ext = (side_length, -side_length, -side_length, side_length)
 
         vmax = np.nanmax(Qphi_image_masked)
         norm = pro.DivergingNorm(vmin=-vmax, vmax=vmax)
-        axes[i].imshow(Qphi_image, extent=ext, cmap="div", norm=norm, vmin=norm.vmin, vmax=norm.vmax)
+        axes[i].imshow(Qphi_image_subbed, extent=ext, cmap="div", norm=norm, vmin=norm.vmin, vmax=norm.vmax)
         labels = label_from_folder(folder).split()
         axes[i].text(
             0.03, 1.01, labels[0],
@@ -79,8 +101,8 @@ if __name__ == "__main__":
             va="bottom"
         )
 
-        # patch = patches.Circle((0, 0), radius=17 / target_info.dist_pc, ec="w", fill=False, lw=1)
-        # axes[i].add_patch(patch)
+        patch = patches.Circle((0, 0), radius=21 / target_info.dist_pc, ec="0.1", fill=False, lw=1)
+        axes[i].add_patch(patch)
 
         # star position
         axes[i].scatter(0, 0, marker="+", lw=1, markersize=50, c="0.1")
@@ -111,6 +133,6 @@ if __name__ == "__main__":
         ax.contour(alma_xs, alma_ys, alma_data, origin="lower", colors="0.1", alpha=0.5, levels=levels, lw=0.5)
 
     fig.savefig(
-        paths.figures / "HD169142_Qphi_ALMA_mosaic_inner.pdf",
+        paths.figures / "HD169142_Qphi_ALMA_mosaic_inner_subbed.pdf",
         bbox_inches="tight", dpi=300
     )

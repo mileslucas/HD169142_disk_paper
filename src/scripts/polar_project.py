@@ -31,38 +31,36 @@ if __name__ == "__main__":
     vamp_psf /= sum(vamp_psf) # normalize PSF kernel
 
     for i, folder in enumerate(tqdm.tqdm(folders)):
-        # load data
-        with fits.open(
-            paths.data
-            / folder
-            / "diskmap"
-            / f"{folder}_HD169142_diskmap_deprojected.fits"
-        ) as hdul:
-            deproj_cube = hdul[0].data
+        keyset = ("Qphi", "Uphi") if "ALMA" not in folder else ("I",)
+        for key in keyset:
+            # load data
+            deprojected_frame = fits.getdata(
+                paths.data
+                / folder
+                / "diskmap"
+                / f"{folder}_HD169142_diskmap_{key}_deprojected.fits"
+            )
 
-        radii = frame_radii(deproj_cube)
+            idx_radii = frame_radii(deprojected_frame)
 
-        # warp to polar coordinates
-        # if "VAMPIRES" in folder:
-        #     frame = convolve(deproj_cube, vamp_psf)
-        # else:
-        frame = convolve(deproj_cube, kernels.Gaussian2DKernel(1 / (2 * np.sqrt(2 * np.log(2)))))
+            smoothed_frame = convolve(deprojected_frame, kernels.Gaussian2DKernel(1 / (2 * np.sqrt(2 * np.log(2)))))
 
-        max_rad = deproj_cube.shape[-2] // 2
-        if "ALMA" in folder:
-            data = np.rot90(np.nan_to_num(frame))
-        else:
-            data = np.rot90(np.nan_to_num(frame * radii**2))
+            max_rad = deprojected_frame.shape[-2] // 2
+            if "ALMA" in folder:
+                # don't multiply alma data by r^2!
+                data = np.rot90(np.nan_to_num(smoothed_frame))
+            else:
+                data = np.rot90(np.nan_to_num(smoothed_frame * idx_radii**2))
 
-        polar_frame, polar_settings = pt.convertToPolarImage(
-            data,
-            angleSize=360//_DEG_PER_PIXEL,  # 5 degree per bin
-            initialRadius=0,
-            finalRadius=max_rad,
-            radiusSize=max_rad,
-            order=3,
-        )
-        polar_frame = np.transpose(polar_frame)
+            polar_frame, polar_settings = pt.convertToPolarImage(
+                data,
+                angleSize=360//_DEG_PER_PIXEL,  # 5 degree per bin
+                initialRadius=0,
+                finalRadius=max_rad,
+                radiusSize=max_rad,
+                order=3,
+            )
+            polar_frame = np.transpose(polar_frame)
 
-        outname = paths.data / folder / f"{folder}_HD169142_Qphi_polar.fits"
-        fits.writeto(outname, polar_frame, overwrite=True)
+            outname = paths.data / folder / f"{folder}_HD169142_{key}_polar.fits"
+            fits.writeto(outname, polar_frame, overwrite=True)

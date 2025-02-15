@@ -22,10 +22,10 @@ function estimate_motion(separation, mass)
     return motion |> u"°/yr"
 end
 
-inner_peak = (6.728686868686862 ± 1.761272682203242)u"°/yr"
+inner_peak = (5.390404040404034 ± 1.0873340926494737)u"°/yr"
 inner_loc = 21.15u"AU"
 
-outer_peak = (1.2589898989898978 ± 1.0781554534092694)u"°/yr"
+outer_peak = (0.5874747474747468 ± 1.1999989116751846)u"°/yr"
 outer_loc = (65±5)u"AU"
 
 

@@ -58,7 +58,7 @@ if __name__ == "__main__":
 
 
     axes[0].plot(common_rs, mean_curve, shadedata=err_curve, c="C0", label=r"Mean $Q_\phi \times r^2$", zorder=10)
-    axes[0].plot(alma_radii, alma_curve, shadedata=alma_err, c="C3", label="ALMA (1.3mm)", zorder=10)
+    axes[0].plot(alma_radii, alma_curve, shadedata=alma_err, c="C3", label="ALMA (1.3mm)", zorder=9)
 
 
 

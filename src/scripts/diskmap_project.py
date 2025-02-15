@@ -46,56 +46,27 @@ def process_vampires_data(folder, filename):
 
     vampires_Qphi = crop(vampires_stokes_cube[4], crop_size)
     get_diskmap_outputs(
-        vampires_Qphi, name=paths.data / folder / "diskmap" / f"{folder}_HD169142_diskmap", pxscale=vampires_hdr["PXSCALE"] / 1e3, rmax=200
+        vampires_Qphi, name=paths.data / folder / "diskmap" / f"{folder}_HD169142_diskmap_Qphi", pxscale=vampires_hdr["PXSCALE"] / 1e3, rmax=200
+    )
+    vampires_Uphi = crop(vampires_stokes_cube[5], crop_size)
+    get_diskmap_outputs(
+        vampires_Uphi, name=paths.data / folder / "diskmap" / f"{folder}_HD169142_diskmap_Uphi", pxscale=vampires_hdr["PXSCALE"] / 1e3, rmax=200
     )
 
-    # vampires_Qphi = np.array(
-    #     [crop(frame[4], crop_size) for frame in vampires_stokes_cube]
-    # )
-    # filt_names = ("F610", "F670", "F720", "F760")
-    # for idx in range(vampires_Qphi.shape[0]):
-    #     filt = filt_names[idx]
-    #     tmp_name = (
-    #         filename.parent / "diskmap" / f"{folder}_HD169142_diskmap_{filt}"
-    #     )
-    #     get_diskmap_outputs(
-    #         vampires_Qphi[idx], name=tmp_name, pxscale=vampires_hdr["PXSCALE"] / 1e3, rmax=200
-    #     )
-
-    # # Take the outputs for each wavelength and combine into a single cube
-    # products = (
-    #     "scat_angle",
-    #     "radius",
-    #     "azimuth",
-    #     "r2_scaled",
-    #     "deprojected",
-    #     "total_intensity",
-    # )
-    # for product in products:
-    #     data = []
-    #     for filt in filt_names:
-    #         name = (
-    #             filename.parent
-    #             / "diskmap"
-    #             / f"{folder}_HD169142_diskmap_{filt}_{product}.fits"
-    #         )
-    #         data.append(fits.getdata(name))
-    #         name.unlink()
-    #     out_name = (
-    #         filename.parent
-    #         / "diskmap"
-    #         / f"{folder}_HD169142_diskmap_{product}.fits"
-    #     )
-    #     fits.writeto(out_name, np.array(data), overwrite=True)
-
-
-def process_zimpol_data(folder: str, filename: Path):
+def process_zimpol_data(folder: str):
     zpl_Qphi, _ = fits.getdata(
-        filename,
+        filename = paths.data / folder / "Qphi.fits",
         header=True,
     )
-    tmp_name = paths.data / folder / "diskmap" / f"{folder}_HD169142_diskmap"
+    tmp_name = paths.data / folder / "diskmap" / f"{folder}_HD169142_diskmap_Qphi"
     get_diskmap_outputs(zpl_Qphi, name=tmp_name, pxscale=zimpol_info.pxscale, rmax=300)
+
+    zpl_Uphi, _ = fits.getdata(
+        filename = paths.data / folder / "Uphi.fits",
+        header=True,
+    )
+    tmp_name = paths.data / folder / "diskmap" / f"{folder}_HD169142_diskmap_Uphi"
+    get_diskmap_outputs(zpl_Uphi, name=tmp_name, pxscale=zimpol_info.pxscale, rmax=300)
 
 def process_irdis_data(folder: str, filename: Path):
     cube, _ = fits.getdata(
@@ -103,19 +74,32 @@ def process_irdis_data(folder: str, filename: Path):
         header=True,
     )
     irdis_Qphi = crop(cube[1], 500)
-    tmp_name = paths.data / folder / "diskmap" / f"{folder}_HD169142_diskmap"
+    tmp_name = paths.data / folder / "diskmap" / f"{folder}_HD169142_diskmap_Qphi"
     get_diskmap_outputs(irdis_Qphi, name=tmp_name, pxscale=irdis_info.pxscale, rmax=700)
+    irdis_Uphi = crop(cube[2], 500)
+    tmp_name = paths.data / folder / "diskmap" / f"{folder}_HD169142_diskmap_Uphi"
+    get_diskmap_outputs(irdis_Uphi, name=tmp_name, pxscale=irdis_info.pxscale, rmax=700)
 
 
-def process_naco_data(folder: str, filename: Path):
+def process_naco_data(folder: str):
     naco_Qphi, naco_Qphi_hdr = fits.getdata(
-        filename, header=True, ext=("Q_PHI_CTC_IPS", 1)
+        filename = paths.data / folder / "coadded" / "Q_phi.fits", header=True, ext=("Q_PHI_CTC_IPS", 1)
     )
     naco_Qphi = crop(naco_Qphi, 120)
 
-    tmp_name = paths.data / folder / "diskmap" / f"{folder}_HD169142_diskmap"
+    tmp_name = paths.data / folder / "diskmap" / f"{folder}_HD169142_diskmap_Qphi"
     get_diskmap_outputs(
         naco_Qphi, name=tmp_name, pxscale=naco_Qphi_hdr["ESO INS PIXSCALE"], rmax=300
+    )
+
+    naco_Uphi, naco_Uphi_hdr = fits.getdata(
+        filename = paths.data / folder / "coadded" / "U_phi.fits", header=True, ext=("U_PHI_CTC_IPS", 1)
+    )
+    naco_Uphi = crop(naco_Uphi, 120)
+
+    tmp_name = paths.data / folder / "diskmap" / f"{folder}_HD169142_diskmap_Uphi"
+    get_diskmap_outputs(
+        naco_Uphi, name=tmp_name, pxscale=naco_Uphi_hdr["ESO INS PIXSCALE"], rmax=300
     )
 
 
@@ -125,25 +109,36 @@ def process_gpi_data(folder: str, filename: Path):
         header=True,
     )
     gpi_Qphi = cube[1]
-    tmp_name = paths.data / folder / "diskmap" / f"{folder}_HD169142_diskmap"
+    tmp_name = paths.data / folder / "diskmap" / f"{folder}_HD169142_diskmap_Qphi"
     get_diskmap_outputs(gpi_Qphi, name=tmp_name, pxscale=gpi_info.pxscale, rmax=400)
+    gpi_Uphi = cube[2]
+    tmp_name = paths.data / folder / "diskmap" / f"{folder}_HD169142_diskmap_Uphi"
+    get_diskmap_outputs(gpi_Uphi, name=tmp_name, pxscale=gpi_info.pxscale, rmax=400)
 
 def process_alma_data(folder: str, filename: Path):
     alma_data, alma_hdr = fits.getdata(filename, header=True)
     alma_pxscale = np.abs(alma_hdr["CDELT1"]) * 3.6e3 # arcsec / px
     
-    tmp_name = paths.data / folder / "diskmap" / f"{folder}_HD169142_diskmap"
+    tmp_name = paths.data / folder / "diskmap" / f"{folder}_HD169142_diskmap_I"
     get_diskmap_outputs(alma_data, name=tmp_name, pxscale=alma_pxscale, rmax=350)
 
 
-def process_charis_data(folder: str, filename: Path):
+def process_charis_data(folder: str):
     cube, hdr = fits.getdata(
-        filename,
+        filename=paths.data / folder / f"{folder}_HD169142_Qphi.fits",
         header=True,
     )
     charis_Qphi = crop(cube, 140)
-    tmp_name = paths.data / folder / "diskmap" / f"{folder}_HD169142_diskmap"
+    tmp_name = paths.data / folder / "diskmap" / f"{folder}_HD169142_diskmap_Qphi"
     get_diskmap_outputs(charis_Qphi, name=tmp_name, pxscale=hdr["YPIXSCAL"]*3.6e3, rmax=300)
+
+    cube, hdr = fits.getdata(
+        filename=paths.data / folder / f"{folder}_HD169142_Uphi.fits",
+        header=True,
+    )
+    charis_Uphi = crop(cube, 140)
+    tmp_name = paths.data / folder / "diskmap" / f"{folder}_HD169142_diskmap_Uphi"
+    get_diskmap_outputs(charis_Uphi, name=tmp_name, pxscale=hdr["YPIXSCAL"]*3.6e3, rmax=300)
 
 if __name__ == "__main__":
     folders = [
@@ -166,11 +161,9 @@ if __name__ == "__main__":
             )
             process_vampires_data(folder, filename)
         elif "NACO" in folder:
-            filename = paths.data / folder / "coadded" / "Q_phi.fits"
-            process_naco_data(folder, filename)
+            process_naco_data(folder)
         elif "ZIMPOL" in folder:
-            filename = paths.data / folder / "Qphi.fits"
-            process_zimpol_data(folder, filename)
+            process_zimpol_data(folder)
         elif "IRDIS" in folder:
             filename = paths.data / folder / f"{folder}_HD169142_stokes_cube.fits"
             process_irdis_data(folder, filename)
@@ -181,8 +174,7 @@ if __name__ == "__main__":
             filename = paths.data / folder / "HD169142.selfcal.concat.GPU-UVMEM.centered_mJyBeam.fits"
             process_alma_data(folder, filename)
         elif "CHARIS" in folder:
-            filename = paths.data / folder / f"{folder}_HD169142_Qphi.fits"
-            process_charis_data(folder, filename)
+            process_charis_data(folder)
         else:
             print(f"Unrecognized folder: {folder=}")
 

@@ -29,14 +29,14 @@ if __name__ == "__main__":
             paths.data / folder / f"{folder}_HD169142_azimuthal_profiles.csv"
         )
 
-        sub_table = table.query("region == 'inner'")
+        sub_table = table.query("region == 'outer'")
         
         values, error = relative_deviation(sub_table["Qphi"], sub_table["Qphi_err"])
         axes[folder_idx].plot(
             sub_table["azimuth(deg)"],
             values * 100,
             shadedata = error * 100,
-            c="C0",
+            c="C3",
         )        
         labels = label_from_folder(folder).split()
         axes[folder_idx].text(
@@ -60,6 +60,6 @@ if __name__ == "__main__":
     )
 
     fig.savefig(
-        paths.figures / "HD169142_azimuthal_profiles_inner_annotated.pdf",
+        paths.figures / "HD169142_azimuthal_profiles_outer.pdf",
         bbox_inches="tight",
     )

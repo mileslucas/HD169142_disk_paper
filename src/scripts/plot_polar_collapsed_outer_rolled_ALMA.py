@@ -43,7 +43,10 @@ if __name__ == "__main__":
     common_thetas = np.arange(0, 361)
     thetas_grid, rs_grid = np.meshgrid(common_thetas, common_rs)
     images= []
-    for i, folder in enumerate(tqdm.tqdm(folders)):
+    _folders = folders.copy()
+    _idx = _folders.index("20230604_CHARIS_JHK")
+    del _folders[_idx]
+    for i, folder in enumerate(tqdm.tqdm(_folders)):
 
     # load data
         with fits.open(
@@ -86,6 +89,7 @@ if __name__ == "__main__":
     axes[1].text(
         0.01, 0.95, r"Mean $Q_\phi \times r^2$", c="white", ha="left", va="top", transform="axes"
     )
+
 
     ## sup title
     axes.format(
