@@ -63,10 +63,16 @@ if __name__ == "__main__":
 
 
     qphi_peak, qphi_peak_err = bootstrap_peak(common_rs, mean_curve, err_curve)
-    print(f"Qphi max: {qphi_peak}+-{qphi_peak_err} au")
+    print(f"Qphi peak: {qphi_peak} ± {qphi_peak_err} au")
     
     alma_peak, alma_peak_err = bootstrap_peak(alma_radii, alma_curve, alma_err)
-    print(f"ALMA max: {alma_peak}+-{alma_peak_err} au")
+    print(f"ALMA peak: {alma_peak} ± {alma_peak_err} au")
+
+    with open(paths.data / "radial_profile_peaks.csv", "w") as fh:
+        fh.write(f"Qphi,{qphi_peak},{qphi_peak_err}\n")
+        fh.write(f"ALMA,{alma_peak},{alma_peak_err}\n")
+
+
 
     axes[0].axvline(qphi_peak, c="C0", zorder=0, lw=1, alpha=0.7)
     axes[0].axvline(alma_peak, c="C3", zorder=0, lw=1, alpha=0.7)
@@ -83,7 +89,7 @@ if __name__ == "__main__":
 
 
     fig.savefig(
-        paths.figures / "HD169142_radial_profiles_collapsed.pdf", bbox_inches="tight"
+        paths.figures / "HD169142_radial_profiles_Qphi_combined_ALMA.pdf", bbox_inches="tight"
     )
 
 

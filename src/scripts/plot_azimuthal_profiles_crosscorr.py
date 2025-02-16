@@ -88,10 +88,9 @@ if __name__ == "__main__":
     norm_val = np.nanmax(mean_xcorr_inner)
 
     x0, x0err = bootstrap_peak(common_lag, mean_xcorr_inner, mean_xcorr_inner_err)
-    _file_lines = [
-        
-    ]
-    print(f"Inner ring peak correlation: {x0}+-{x0err} deg/yr")
+    with open(paths.data / "cross_correlation_peaks.csv", "w") as fh:
+        fh.write(f"inner,{x0},{x0err}\n")
+    print(f"Inner ring peak correlation: {x0} ± {x0err} deg/yr")
 
     axes[0].plot(common_lag, mean_xcorr_inner/norm_val, shadedata=mean_xcorr_inner_err/norm_val)
     axes[0].axvline(x0, c="C0", lw=1)
@@ -104,8 +103,11 @@ if __name__ == "__main__":
 
 
     x0, x0err = bootstrap_peak(common_lag, mean_xcorr_outer, mean_xcorr_outer_err)
-    print(f"Outer ring peak correlation: {x0}+-{x0err} deg/yr")
+    print(f"Outer ring peak correlation: {x0} ± {x0err} deg/yr")
     
+    with open(paths.data / "cross_correlation_peaks.csv", "a") as fh:
+        fh.write(f"outer,{x0},{x0err}\n")
+
     axes[1].plot(common_lag, mean_xcorr_outer/norm_val, shadedata=mean_xcorr_outer_err/norm_val, c="C3")
     axes[1].axvline(x0, c="C3", lw=1)
     axes[1].format(title="Outer ring")

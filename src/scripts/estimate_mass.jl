@@ -1,6 +1,7 @@
 using Measurements
 using Unitful
 using UnitfulAstro
+using CSV
 
 function estimate_mass(motion, separation)
     T = 360u"°" / motion
@@ -21,6 +22,8 @@ function estimate_motion(separation, mass)
     motion = 360u"°" / T
     return motion |> u"°/yr"
 end
+
+
 
 inner_peak = (5.390404040404034 ± 1.0873340926494737)u"°/yr"
 inner_loc = 21.15u"AU"
