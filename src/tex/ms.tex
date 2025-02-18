@@ -1,9 +1,9 @@
 % Define document class
-\documentclass[twocolumn]{aastex631}
+\documentclass[twocolumn,twocolappendix]{aastex631}
 \usepackage{showyourwork}
 \usepackage{multirow}
-\usepackage{CJK}
 \usepackage{datetime}
+\usepackage{CJK}
 \yyyymmdddate
 \usepackage{mathtools}
 \usepackage{savesym}
@@ -36,8 +36,8 @@
 \begin{CJK*}{UTF8}{gbsn}
 
 % Title
-\title{A protoplanet in its early stages of formation: a decadal analysis of the HD 169142 transition disk}
-\shorttitle{A Decadal Analysis of HD 169142}
+\title{Evidence for early-stage planet-formation in the HD 169142 transition disk}
+% \shorttitle{A Decadal Analysis of HD 169142}
 
 % Author list
 \input{authors}
@@ -50,16 +50,20 @@
 \input{sections/02_observations}
 \input{sections/03_polarimetric_images}
 \input{sections/04_keplerian_analysis}
-\input{sections/05_section5}
-
-\section*{Acknowledgements}
-First and foremost, we wish to recognize and acknowledge the significant cultural role and reverence that the summit of Maunakea has always had within the Indigenous Hawaiian community. We are grateful and thank the community for the privilege of conducting observations from this sacred mauna.
-
-We thank telescope operators TODO for their support during the observations used in this work. We thank Gesa Bertrang and Mario Flock for sharing the ZIMPOL data used in this work. We thank Myriam Benisty for sharing the IRDIS data used in this work.
-
-This research was funded by the Heising-Simons Foundation through grant \#2020-1823. Based on data collected at Subaru Telescope, which is operated by the National Astronomical Observatory of Japan. The development of SCExAO is supported by the Japan Society for the Promotion of Science (Grant-in-Aid for Research \#23340051, \#26220704, \#23103002, \#19H00703, \#19H00695, and \#21H04998), the Subaru Telescope, the National Astronomical Observatory of Japan, the Astrobiology Center of the National Institutes of Natural Sciences, Japan, the Mt Cuba Foundation and the Heising-Simons Foundation.
+\input{sections/05_compare_to_alma}
+\input{sections/06_discussions}
+\input{acknowledgements}
 
 \bibliography{references}
+
+\appendix
+\input{sections/appendix_01_peaks}
+\input{sections/appendix_03_crosscors}
+
+
+\section{Data and Code Availability}
+This study used the reproducibility software \texttt{showyourwork} \citep{luger_mapping_2021}, which leverages continuous integration to create the figures and compile this manuscript programmatically. Each figure caption contains a link to the script used to make the figure (at the commit corresponding to the current build of the manuscript). The git repository associated with this study is publicly available at \url{https://github.com/mileslucas/HD169142_disk_paper}. Reduced data is available upon request, and raw observational data for the SCExAO observations are available from the SMOKA archive\footnote{\url{https://smoka.nao.ac.jp/}}.
+
 
 \end{CJK*}
 \end{document}
