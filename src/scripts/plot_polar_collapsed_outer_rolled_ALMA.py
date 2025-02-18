@@ -67,11 +67,11 @@ if __name__ == "__main__":
         rs_au = rs[mask] * target_info.dist_pc * pxscales[folder]
 
         this_time = time_from_folder(folder)
-        polar_cube_rolled = keplerian_warp(polar_cube[mask, :], rs_au, this_time, alma_time)
+        polar_cube_warped = keplerian_warp(polar_cube[mask, :], rs_au, this_time, alma_time)
 
-        this_thetas = np.linspace(0, 360, polar_cube_rolled.shape[1])
+        this_thetas = np.linspace(0, 360, polar_cube_warped.shape[1])
         _ths, _rs = np.meshgrid(this_thetas, rs_au)
-        data = interpolate.griddata((_rs.ravel(), _ths.ravel()), polar_cube_rolled.ravel(), (rs_grid.ravel(), thetas_grid.ravel()), method="cubic").reshape((len(common_rs), len(common_thetas)))
+        data = interpolate.griddata((_rs.ravel(), _ths.ravel()), polar_cube_warped.ravel(), (rs_grid.ravel(), thetas_grid.ravel()), method="cubic").reshape((len(common_rs), len(common_thetas)))
         images.append(data / np.nanmedian(data))
 
 

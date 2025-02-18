@@ -31,6 +31,7 @@ if __name__ == "__main__":
             polar_cube = hdul[0].data
 
         rin = np.floor(48 / target_info.dist_pc / pxscales[folder]).astype(int)
+        rcrit = np.floor(65 / target_info.dist_pc / pxscales[folder]).astype(int)
         rout = np.ceil(110 / target_info.dist_pc / pxscales[folder]).astype(int)
         
         rs = np.arange(polar_cube.shape[0])
@@ -40,8 +41,10 @@ if __name__ == "__main__":
 
 
         # PDI images
-        norm = simple_norm(polar_cube[mask, :], vmin=0, stretch="asinh", asinh_a=0.5)
-        im = axes[i].imshow(polar_cube[mask, :], extent=ext, norm=norm, vmin=norm.vmin, vmax=norm.vmax, cmap=pro.rc["cmap"])
+        polar_cube_masked = polar_cube[mask]
+        vmax = np.nanmax(polar_cube_masked[:(rcrit - rin)])
+        norm = simple_norm(polar_cube_masked, vmin=0, vmax=vmax, stretch="sinh", sinh_a=0.5)
+        im = axes[i].imshow(polar_cube_masked, extent=ext, norm=norm, vmin=norm.vmin, vmax=norm.vmax, cmap=pro.rc["cmap"])
         # axes[0].colorbar(im)
         labels = label_from_folder(folder).split()
         axes[i].text(

@@ -29,8 +29,7 @@ if __name__ == "__main__":
         table = pd.read_csv(
             paths.data / folder / f"{folder}_HD169142_azimuthal_profiles.csv"
         )
-        # if "VAMPIRES" in folder:
-        #     table = process_vampires(table)
+
 
         groups = table.groupby("region")
         for reg_name, group in groups:

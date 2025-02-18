@@ -4,10 +4,11 @@ import paths
 from astropy.io import fits
 import tqdm
 from astropy.visualization import simple_norm
+from astropy import time
 
 from target_info import target_info
 from utils_ephemerides import keplerian_warp
-from utils_organization import label_from_folder, time_from_folder, folders, pxscales
+from utils_organization import folders, pxscales, time_from_folder, label_from_folder
 from utils_plots import setup_rc
 
 if __name__ == "__main__":
@@ -32,8 +33,8 @@ if __name__ == "__main__":
         ) as hdul:
             polar_cube = hdul[0].data
 
-        rin = np.floor(48 / target_info.dist_pc / pxscales[folder]).astype(int)
-        rout = np.ceil(110 / target_info.dist_pc / pxscales[folder]).astype(int)
+        rin = np.floor(15 / target_info.dist_pc / pxscales[folder]).astype(int)
+        rout = np.ceil(35 / target_info.dist_pc / pxscales[folder]).astype(int)
 
         rs = np.arange(polar_cube.shape[0])
 
@@ -41,11 +42,11 @@ if __name__ == "__main__":
         ext = (rin * pxscales[folder] * target_info.dist_pc, rout * pxscales[folder] * target_info.dist_pc, 360, 0)
 
         rs_au = rs[mask] * target_info.dist_pc * pxscales[folder]
-        polar_cube_rolled = keplerian_warp(polar_cube[mask, :], rs_au, timestamps[i], timestamps[4])
+        polar_cube_warped = keplerian_warp(polar_cube[mask, :], rs_au, timestamps[i], timestamps[4])
 
 
         # PDI images
-        data = np.flipud(polar_cube_rolled.T)
+        data = np.flipud(polar_cube_warped.T)
         norm = simple_norm(data, vmin=0, stretch="sinh", sinh_a=0.5)
         im = axes[i].imshow(data, extent=ext, norm=norm, vmin=norm.vmin, vmax=norm.vmax, cmap=pro.rc["cmap"])
         # axes[0].colorbar(im)
@@ -57,9 +58,11 @@ if __name__ == "__main__":
             0.95, 0.01, "\n".join(labels[1:]), transform="axes", c="white", ha="right", va="bottom", fontweight="bold", rotation=-90
         )
 
+
     for ax in axes:
         for offset in (90, 270):
             ax.axhline(offset + target_info.pos_angle, c="0.9", lw=1)
+
 
     ## sup title
     axes.format(
@@ -72,5 +75,5 @@ if __name__ == "__main__":
 
 
     fig.savefig(
-        paths.figures / "HD169142_polar_Qphi_outer_rolled_presentation.pdf", bbox_inches="tight"
+        paths.figures / "HD169142_polar_Qphi_inner_warped_presentation.pdf", bbox_inches="tight"
     )

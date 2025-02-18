@@ -8,6 +8,8 @@ import pandas as pd
 from astropy.nddata import Cutout2D
 from target_info import target_info
 
+_DEG_PER_PX = 5
+
 vampires_filters = ["F610", "F670", "F720", "F760"]
 vampires_psfs = [
     fits.getdata(paths.data / f"VAMPIRES_{filt}_synthpsf.fits")
@@ -21,7 +23,7 @@ def crop(data, window):
     return cutout.data
 
 
-def get_azimuthal_profile(image, image_err, azimuth_deg, bin_width=5) -> dict:
+def get_azimuthal_profile(image, image_err, azimuth_deg, bin_width=_DEG_PER_PX) -> dict:
     azimuth_ints = np.round(azimuth_deg).astype(int)
     bins = np.arange(azimuth_ints.min(), azimuth_ints.max() + 1, bin_width)
     counts = []

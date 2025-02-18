@@ -24,7 +24,7 @@ def crop(data, window):
     return cutout.data
 
 
-def get_radial_profile(image, image_err, radii):
+def get_radial_contrast(image, image_err, radii):
     radii_ints = np.round(radii).astype(int)
     bins = np.arange(radii_ints.min(), radii_ints.max() + 1)
     counts = []

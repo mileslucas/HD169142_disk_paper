@@ -7,7 +7,7 @@ from utils_crosscorr import bootstrap_phase_correlogram
 from target_info import target_info
 from utils_ephemerides import keplerian_warp
 from astropy.io import fits
-from utils_errorprop import relative_deviation, bootstrap_peak
+from utils_errorprop import relative_deviation, bootstrap_argmax_and_max
 import tqdm
 from utils_plots import setup_rc
 from utils_organization import folders, pxscales
@@ -78,10 +78,10 @@ if __name__ == "__main__":
         rs_au = rs[mask] * target_info.dist_pc * pxscales[folder]
 
         this_time = time_from_folder(folder)
-        polar_cube_rolled = keplerian_warp(polar_cube[mask, :], rs_au, this_time, alma_time)
+        polar_cube_warped = keplerian_warp(polar_cube[mask, :], rs_au, this_time, alma_time)
 
-        this_curve = np.mean(polar_cube_rolled, axis=0)
-        this_curve_err = np.std(polar_cube_rolled, axis=0) / np.sqrt(polar_cube_rolled.shape[0])
+        this_curve = np.mean(polar_cube_warped, axis=0)
+        this_curve_err = np.std(polar_cube_warped, axis=0) / np.sqrt(polar_cube_warped.shape[0])
         norm_curve, norm_err = relative_deviation(this_curve, this_curve_err)
 
         lags_degs, xcorr, xcorr_err = bootstrap_phase_correlogram(alma_norm_prof, alma_norm_err, norm_curve, norm_err)
@@ -98,7 +98,7 @@ if __name__ == "__main__":
     rmserr_xcorr = np.sqrt(np.sum(np.power(errs, 2), axis=0)) / len(errs)
     err_xcorr = np.hypot(stderr_xcorr, rmserr_xcorr)
 
-    best_lag, best_lag_err = bootstrap_peak(common_lags, mean_xcorr, err_xcorr)
+    best_lag, best_lag_err, _, _ = bootstrap_argmax_and_max(common_lags, mean_xcorr, err_xcorr)
     # for i in range(len(xcorrs)):
     #     axes[0].plot(common_lags, xcorrs[i], shadedata=errs[i], c="C3", alpha=0.6, zorder=5, lw=0.8)
     axes[0].plot(common_lags, mean_xcorr, shadedata=err_xcorr, c="C0", zorder=10)

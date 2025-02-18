@@ -49,10 +49,10 @@ if __name__ == "__main__":
         ext = (0, 360, rin * pxscales[folder] * target_info.dist_pc, rout * pxscales[folder] * target_info.dist_pc)
         rs_au = rs[mask] * target_info.dist_pc * pxscales[folder]
 
-        polar_cube_rolled = keplerian_warp(polar_cube[mask, :], rs_au, timestamps[i], timestamps[4])
+        polar_cube_warped = keplerian_warp(polar_cube[mask, :], rs_au, timestamps[i], timestamps[4])
         # PDI images
-        norm = simple_norm(polar_cube_rolled, vmin=0, stretch="sinh", sinh_a=0.5)
-        im = axes[i].imshow(polar_cube_rolled, extent=ext, norm=norm, vmin=norm.vmin, vmax=norm.vmax, cmap=pro.rc["cmap"])
+        norm = simple_norm(polar_cube_warped, vmin=0, stretch="sinh", sinh_a=0.5)
+        im = axes[i].imshow(polar_cube_warped, extent=ext, norm=norm, vmin=norm.vmin, vmax=norm.vmax, cmap=pro.rc["cmap"])
          # axes[0].colorbar(im)
         labels = label_from_folder(folder).split()
         axes[i].text(
@@ -77,7 +77,7 @@ if __name__ == "__main__":
     axes[:-1].format(xtickloc="none")
 
     fig.savefig(
-        paths.figures / "HD169142_polar_Qphi_inner_rolled.pdf", bbox_inches="tight", dpi=300
+        paths.figures / "HD169142_polar_Qphi_inner_warped.pdf", bbox_inches="tight", dpi=300
     )
 
 

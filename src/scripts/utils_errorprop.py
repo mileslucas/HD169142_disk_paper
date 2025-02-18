@@ -13,19 +13,44 @@ def relative_deviation(signal, error):
     D_err = np.hypot(error / mean, signal / mean**2 * mean_err)
     return D, D_err
 
-def bootstrap_peak(xs, signal, error, N=10000):
+def bootstrap_argmax_and_max(xs, signal, error, N=10000):
     # assume normally distributed errorss
     signal_samples = signal[None, :] + np.random.randn(N, len(signal)) * error[None, :]
 
-    peak_xs = []
+    max_xs = []
+    max_values = []
     for _signal in signal_samples:
-        peak_idx = np.nanargmax(_signal)
+        max_idx = np.nanargmax(_signal)
+        max_xs.append(xs[max_idx])
+        max_values.append(_signal[max_idx])
 
-        peak_x = xs[peak_idx]
-        peak_xs.append(peak_x)
+    max_x = np.mean(max_xs, axis=0)
+    max_x_std = np.std(max_xs, axis=0)
 
-    peak_x = np.mean(peak_xs, axis=0)
-    peak_x_std = np.std(peak_xs, axis=0)
+    max_value = np.mean(max_values, axis=0)
+    max_value_std = np.std(max_values, axis=0)
 
 
-    return peak_x, peak_x_std
+    return max_x, max_x_std, max_value, max_value_std
+
+
+def bootstrap_argmin_and_min(xs, signal, error, N=10000):
+    # assume normally distributed errorss
+    signal_samples = signal[None, :] + np.random.randn(N, len(signal)) * error[None, :]
+
+    min_xs = []
+    min_values = []
+    for _signal in signal_samples:
+        min_idx = np.nanargmin(_signal)
+        min_xs.append(xs[min_idx])
+        min_values.append(_signal[min_idx])
+
+    min_x = np.mean(min_xs, axis=0)
+    min_x_std = np.std(min_xs, axis=0)
+
+    min_value = np.mean(min_values, axis=0)
+    min_value_std = np.std(min_values, axis=0)
+
+
+    return min_x, min_x_std, min_value, min_value_std
+

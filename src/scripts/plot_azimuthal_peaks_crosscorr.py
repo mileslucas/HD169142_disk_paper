@@ -13,9 +13,9 @@ if __name__ == "__main__":
 
     ## Plot and save
     width = 3.31314
-    fig, axes = pro.subplots(
-        nrows=1, ncols=2, width=f"{width}in", wspace=0.75, spanx=False
-    )
+    aspect_ratio = 1.61803
+    height = width / aspect_ratio
+    fig, axes = pro.subplots(width=f"{width}in", height=f"{height}in")
 
     labels = [label_from_folder(f) for f in folders]
 
@@ -36,7 +36,7 @@ if __name__ == "__main__":
             curves[f"{reg_name}_err"].append(errs)
 
 
-    common_lag = np.linspace(-30, 30, 100)
+    common_lag = np.linspace(-50, 50, 100)
 
     xcorrs_inner = []
     xcorrs_inner_err = []
@@ -55,9 +55,7 @@ if __name__ == "__main__":
             curve2_err = curves["inner_err"][row_idx]
             folder2 = folders[row_idx]
             dt = get_time_delta_yr(folder1, folder2)
-            if dt < 1.2:
-                continue
-            lags, xcorr, xcorr_err = bootstrap_phase_correlogram(curve2, curve2_err, curve1, curve1_err, degs_per_px=5)
+            lags, xcorr, xcorr_err = bootstrap_phase_correlogram(curve2, curve2_err, curve1, curve1_err)
             lags = lags / dt
             inds = np.argsort(lags)
             extrap = np.interp(common_lag, lags[inds], xcorr[inds], left=np.nan, right=np.nan)
@@ -76,9 +74,7 @@ if __name__ == "__main__":
             curve2_err = curves["outer_err"][row_idx]
             folder2 = folders[row_idx]
             dt = get_time_delta_yr(folder1, folder2)
-            if dt < 5:
-                continue
-            lags, xcorr, xcorr_err = bootstrap_phase_correlogram(curve2, curve2_err, curve1, curve1_err, degs_per_px=5)
+            lags, xcorr, xcorr_err = bootstrap_phase_correlogram(curve2, curve2_err, curve1, curve1_err)
             lags = lags / dt
             inds = np.argsort(lags)
             extrap = np.interp(common_lag, lags[inds], xcorr[inds], left=np.nan, right=np.nan)

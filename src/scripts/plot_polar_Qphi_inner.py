@@ -17,10 +17,10 @@ if __name__ == "__main__":
 
     ## Plot and save
     width = 3.31314
-    aspect_ratio = 1 / (3 * 1.61803)
+    aspect_ratio = 1 / (1.61803)
     height = width * aspect_ratio
     fig, axes = pro.subplots(
-        nrows=8, width=f"{width}in", refheight=f"{height}in", hspace=0.5
+        nrows=8, ncols=2, width=f"{width}in", refheight=f"{height}in", hspace=0.5
     )
 
     for i, folder in enumerate(tqdm.tqdm(folders)):

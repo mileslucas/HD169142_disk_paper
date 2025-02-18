@@ -5,7 +5,7 @@ from astropy.time import Time
 from scipy import signal
 import numpy as np
 from utils_crosscorr import phase_correlogram, bootstrap_phase_correlogram
-from utils_errorprop import bootstrap_peak
+from utils_errorprop import bootstrap_argmax_and_max
 from utils_plots import setup_rc
 
 if __name__ == "__main__":
@@ -37,14 +37,14 @@ if __name__ == "__main__":
     axes[0].plot(x, B, label="B", c="C3", lw=1)
 
     # lags, xcorr = phase_correlogram(B, A)
-    lags, xcorr, xcorr_err = bootstrap_phase_correlogram(B, B_err, A, A_err)
+    lags, xcorr, xcorr_err = bootstrap_phase_correlogram(B, B_err, A, A_err, degs_per_px=spacing)
     norm_val = np.nanmax(xcorr)
-    norm_lags = lags / 5 * spacing
 
-    axes[1].plot(norm_lags, xcorr, shadedata=xcorr_err, c="C0")
-    peaklag, peaklagerr = bootstrap_peak(norm_lags, xcorr, xcorr_err)
-    axes[1].axvline(lag_known, c="C0", lw=1, alpha=0.6)
+    axes[1].plot(lags, xcorr, shadedata=xcorr_err, c="C0")
+    mask = (lags >= 0) & (lags <= np.pi)
+    peaklag, peaklagerr = bootstrap_argmax_and_max(lags[mask], xcorr[mask], xcorr_err[mask])
     axes[1].axvline(peaklag, c="C0", lw=1, ls="--", alpha=0.6)
+    axes[1].axvline(lag_known, c="C0", lw=1, alpha=0.6)
     print(f"{peaklag} +- {peaklagerr}")
 
 

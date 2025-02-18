@@ -88,5 +88,5 @@ if __name__ == "__main__":
     axes[:-1].format(xtickloc="none")
 
     fig.savefig(
-        paths.figures / "HD169142_polar_Qphi_inner_rolled_subbed.pdf", bbox_inches="tight"
+        paths.figures / "HD169142_polar_Qphi_inner_warped_subbed.pdf", bbox_inches="tight"
     )

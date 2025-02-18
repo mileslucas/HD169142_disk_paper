@@ -63,17 +63,16 @@ if __name__ == "__main__":
 
 
     for i, folder in enumerate(folders):
-        stokes_path = paths.data / folder / "diskmap" / f"{folder}_HD169142_diskmap_Qphi_deprojected.fits"
+        stokes_path = paths.data / folder / "diskmap" / f"{folder}_HD169142_diskmap_Qphi_r2_scaled.fits"
         Qphi_image, header = fits.getdata(stokes_path, header=True)
-        # radius_path = paths.data / folder / "diskmap" / f"{folder}_HD169142_diskmap_radius.fits"
-        # radius_map_au = fits.getdata(radius_path)
+        radius_path = paths.data / folder / "diskmap" / f"{folder}_HD169142_diskmap_radius.fits"
+        radius_map_au = fits.getdata(radius_path)
 
-        radius_map_au = frame_radii(Qphi_image) * pxscales[folder] * target_info.dist_pc
 
         # radprof = create_radial_profile_image(Qphi_image, frame_radii(Qphi_image))
         radprof = create_faux_adi_image(Qphi_image)
 
-        Qphi_image_subbed = Qphi_image - radprof
+        Qphi_image_subbed = (Qphi_image - radprof) * radius_map_au**2
 
         Qphi_image_masked = inner_ring_mask(Qphi_image_subbed, radius_map_au)
 
