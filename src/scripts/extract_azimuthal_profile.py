@@ -67,11 +67,11 @@ def process_vampires(folder: str) -> None:
         stokes_cube = hdul[0].data
 
     with fits.open(
-        paths.data / folder / "diskmap" / f"{folder}_HD169142_diskmap_radius.fits"
+        paths.data / folder / "diskmap" / f"{folder}_HD169142_diskmap_Qphi_radius.fits"
     ) as hdul:
         radius_map = hdul[0].data
     with fits.open(
-        paths.data / folder / "diskmap" / f"{folder}_HD169142_diskmap_azimuth.fits"
+        paths.data / folder / "diskmap" / f"{folder}_HD169142_diskmap_Qphi_azimuth.fits"
     ) as hdul:
         azimuth_map = hdul[0].data
 
@@ -131,10 +131,10 @@ def process_naco(folder: str) -> None:
     )
 
     radius_map = fits.getdata(
-        paths.data / folder / "diskmap" / f"{folder}_HD169142_diskmap_radius.fits"
+        paths.data / folder / "diskmap" / f"{folder}_HD169142_diskmap_Qphi_radius.fits"
     )
     azimuth_map = fits.getdata(
-        paths.data / folder / "diskmap" / f"{folder}_HD169142_diskmap_azimuth.fits"
+        paths.data / folder / "diskmap" / f"{folder}_HD169142_diskmap_Qphi_azimuth.fits"
     )
     r2_map = radius_map**2
 
@@ -182,10 +182,10 @@ def process_irdis(folder: str) -> None:
     Uphi = cube[2]
 
     radius_map = fits.getdata(
-        paths.data / folder / "diskmap" / f"{folder}_HD169142_diskmap_radius.fits"
+        paths.data / folder / "diskmap" / f"{folder}_HD169142_diskmap_Qphi_radius.fits"
     )
     azimuth_map = fits.getdata(
-        paths.data / folder / "diskmap" / f"{folder}_HD169142_diskmap_azimuth.fits"
+        paths.data / folder / "diskmap" / f"{folder}_HD169142_diskmap_Qphi_azimuth.fits"
     )
     r2_map = radius_map**2
 
@@ -232,10 +232,10 @@ def process_zimpol(folder: str) -> None:
     Uphi = fits.getdata(paths.data / folder / "Uphi.fits")
 
     radius_map = fits.getdata(
-        paths.data / folder / "diskmap" / f"{folder}_HD169142_diskmap_radius.fits"
+        paths.data / folder / "diskmap" / f"{folder}_HD169142_diskmap_Qphi_radius.fits"
     )
     azimuth_map = fits.getdata(
-        paths.data / folder / "diskmap" / f"{folder}_HD169142_diskmap_azimuth.fits"
+        paths.data / folder / "diskmap" / f"{folder}_HD169142_diskmap_Qphi_azimuth.fits"
     )
     r2_map = radius_map**2
 
@@ -283,10 +283,10 @@ def process_gpi(folder: str) -> None:
     Uphi = cube[2]
 
     radius_map = fits.getdata(
-        paths.data / folder / "diskmap" / f"{folder}_HD169142_diskmap_radius.fits"
+        paths.data / folder / "diskmap" / f"{folder}_HD169142_diskmap_Qphi_radius.fits"
     )
     azimuth_map = fits.getdata(
-        paths.data / folder / "diskmap" / f"{folder}_HD169142_diskmap_azimuth.fits"
+        paths.data / folder / "diskmap" / f"{folder}_HD169142_diskmap_Qphi_azimuth.fits"
     )
     r2_map = radius_map**2
 
@@ -328,17 +328,16 @@ def process_gpi(folder: str) -> None:
 
 def process_charis(folder: str) -> None:
     # load data
-    Qphi = fits.getdata(paths.data / folder / f"{folder}_HD169142_Qphi.fits")
-    Uphi = fits.getdata(paths.data / folder / f"{folder}_HD169142_Uphi.fits")
+    cube = fits.getdata(paths.data / folder / f"{folder}_HD169142_stokes_collapsed.fits")
 
-    Qphi = crop(Qphi, 140)
-    Uphi = crop(Uphi, 140)
+    Qphi = crop(cube[4], 140)
+    Uphi = crop(cube[5], 140)
 
     radius_map = fits.getdata(
-        paths.data / folder / "diskmap" / f"{folder}_HD169142_diskmap_radius.fits"
+        paths.data / folder / "diskmap" / f"{folder}_HD169142_diskmap_Qphi_radius.fits"
     )
     azimuth_map = fits.getdata(
-        paths.data / folder / "diskmap" / f"{folder}_HD169142_diskmap_azimuth.fits"
+        paths.data / folder / "diskmap" / f"{folder}_HD169142_diskmap_Qphi_azimuth.fits"
     )
     r2_map = radius_map**2
 
@@ -384,10 +383,10 @@ def process_alma(folder: str) -> None:
     frame = fits.getdata(paths.data / folder / "HD169142.selfcal.concat.GPU-UVMEM.centered_mJyBeam.fits")
 
     radius_map = fits.getdata(
-        paths.data / folder / "diskmap" / f"{folder}_HD169142_diskmap_radius.fits"
+        paths.data / folder / "diskmap" / f"{folder}_HD169142_diskmap_I_radius.fits"
     )
     azimuth_map = fits.getdata(
-        paths.data / folder / "diskmap" / f"{folder}_HD169142_diskmap_azimuth.fits"
+        paths.data / folder / "diskmap" / f"{folder}_HD169142_diskmap_I_azimuth.fits"
     )
 
     masks = {

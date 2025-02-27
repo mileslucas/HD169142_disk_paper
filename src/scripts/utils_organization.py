@@ -61,3 +61,17 @@ fwhm = {
     "20210906_IRDIS_Ks": 12.25e-3,
     "20240729_VAMPIRES_MBI": 5.9e-3,
 }
+
+# wavelengths in micron
+wavelengths = { 
+    "20120726_NACO_H": 1.65,
+    "20140425_GPI_J": 1.25,
+    "20150503_IRDIS_J": 1.245,
+    "20150710_ZIMPOL_VBB": 0.735,
+    "20170918_ALMA_1.3mm": 1.3e3,
+    "20180715_ZIMPOL_VBB": 0.735,
+    "20230604_CHARIS_JHK": 1.55,
+    "20230707_VAMPIRES_MBI": 0.670,
+    "20210906_IRDIS_Ks": 2.182,
+    "20240729_VAMPIRES_MBI": 0.670,
+}

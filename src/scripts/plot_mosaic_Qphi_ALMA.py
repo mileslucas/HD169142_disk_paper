@@ -25,13 +25,13 @@ if __name__ == "__main__":
     alma_ys = np.linspace(alma_ext[0], alma_ext[1], alma_data.shape[0])
     alma_xs = np.linspace(alma_ext[2], alma_ext[3], alma_data.shape[1])
 
-    fig, axes = pro.subplots(ncols=4, nrows=2, width="7in", hspace=1.75, wspace=0.5, spanx=False)
+    fig, axes = pro.subplots(ncols=4, nrows=2, width="7in", hspace=1.75, wspace=0.5, spanx=False, sharex=False, sharey=False)
 
 
     for i, folder in enumerate(folders):
-        stokes_path = paths.data / folder / "diskmap" / f"{folder}_HD169142_diskmap_r2_scaled.fits"
+        stokes_path = paths.data / folder / "diskmap" / f"{folder}_HD169142_diskmap_Qphi_r2_scaled.fits"
         Qphi_image, header = fits.getdata(stokes_path, header=True)
-        radius_path = paths.data / folder / "diskmap" / f"{folder}_HD169142_diskmap_radius.fits"
+        radius_path = paths.data / folder / "diskmap" / f"{folder}_HD169142_diskmap_Qphi_radius.fits"
         radius_map_au = fits.getdata(radius_path)
 
         Qphi_image_masked = inner_ring_mask(Qphi_image, radius_map_au)
@@ -60,16 +60,22 @@ if __name__ == "__main__":
             va="bottom"
         )
 
+        # star position
+        axes[i].scatter(0, 0, marker="+", lw=0.7, markersize=20, c="white")
 
     axes.format(
         xlim=(0.9, -0.9),
         ylim=(-0.9, 0.9),
-        # xlocator=[0.6, 0.3, 0, -0.3, -0.6],
-        # ylocator=[-0.6, -0.3, 0, 0.3, 0.6],
-        # xlabel=r'$\Delta$RA (")',
-        # ylabel=r'$\Delta$DEC (")',
         xlocator="none",
         ylocator="none"
+    )
+    axes[:, 0].format(
+        ylocator=[-0.6, -0.3, 0, 0.3, 0.6],
+        ylabel=r'$\Delta$DEC (")',
+    )
+    axes[-1, :].format(
+        xlocator=[-0.6, -0.3, 0, 0.3, 0.6],
+        xlabel=r'$\Delta$RA (")',
     )
 
     # axes[1].format(yspineloc="none")

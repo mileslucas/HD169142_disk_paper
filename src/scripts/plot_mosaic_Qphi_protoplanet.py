@@ -17,6 +17,11 @@ def inner_ring_mask(frame, radii):
     rad_mask = (radii >= rin_au) & (radii <= rout_au)
     return np.where(rad_mask, frame, np.nan)
 
+def gap_mask(frame, radii):
+    rin_au = 45 - 5
+    rout_au = 45 + 5
+    rad_mask = (radii >= rin_au) & (radii <= rout_au)
+    return np.where(rad_mask, frame, np.nan)
 
 if __name__ == "__main__":
     setup_rc()
@@ -27,20 +32,21 @@ if __name__ == "__main__":
 
 
     for i, folder in enumerate(folders):
-        stokes_path = paths.data / folder / "diskmap" / f"{folder}_HD169142_diskmap_r2_scaled.fits"
+        stokes_path = paths.data / folder / "diskmap" / f"{folder}_HD169142_diskmap_Qphi_deprojected.fits"
         Qphi_image, header = fits.getdata(stokes_path, header=True)
-        radius_path = paths.data / folder / "diskmap" / f"{folder}_HD169142_diskmap_radius.fits"
+        radius_path = paths.data / folder / "diskmap" / f"{folder}_HD169142_diskmap_Qphi_radius.fits"
         radius_map_au = fits.getdata(radius_path)
 
-        Qphi_image = 1.2 * filters.gaussian(Qphi_image, 1) - filters.median(Qphi_image, np.ones((10, 10)))
+        # Qphi_image = 1.2 * filters.gaussian(Qphi_image, 1) - filters.median(Qphi_image, np.ones((10, 10)))
         # Qphi_image = filters.unsharp_mask(Qphi_image, radius=3, amount=5, preserve_range=True)
 
-        Qphi_image_masked = inner_ring_mask(Qphi_image, radius_map_au)
+        Qphi_image = filters.gaussian(Qphi_image, 1)
+        Qphi_image_masked = gap_mask(Qphi_image, radius_map_au)
 
         side_length = Qphi_image.shape[-1] * pxscales[folder] / 2
         ext = (side_length, -side_length, -side_length, side_length)
 
-        vmax = np.nanpercentile(Qphi_image_masked, 99.9)
+        vmax = np.nanmax(Qphi_image_masked)
         norm = simple_norm(Qphi_image, vmin=0, vmax=vmax, stretch="sqrt", asinh_a=0.05)
         axes[i].imshow(Qphi_image, extent=ext, cmap="bone", norm=norm, vmin=norm.vmin, vmax=norm.vmax)
         labels = label_from_folder(folder).split()
@@ -66,7 +72,9 @@ if __name__ == "__main__":
         th = np.deg2rad(theta + 90)
         x = r_arc * -np.cos(th)
         y = r_arc * np.sin(th)
-        patch = patches.Circle((x, y), 0.05, color="white", lw=1, fill=False)
+        rad_au = 4
+        rad_arc = rad_au / target_info.dist_pc
+        patch = patches.Circle((x, y), rad_arc, color="white", lw=1, fill=False)
         axes[i].add_patch(patch)
         # axes[i].scatter(x, y, marker="+", c="white", ms=40, lw=1)
 

@@ -2,25 +2,29 @@ import proplot as pro
 import numpy as np
 import paths
 from astropy.io import fits
+from skimage.transform import warp_polar
+from astropy.convolution import convolve, kernels
 import tqdm
 from astropy.visualization import simple_norm
 from target_info import target_info
-from utils_organization import label_from_folder, folders, pxscales
+from utils_organization import folders, pxscales, label_from_folder, time_from_folder
 from utils_plots import setup_rc
+from utils_ephemerides import keplerian_warp
 
 if __name__ == "__main__":
     setup_rc()
+    pro.rc["font.size"] = 6
     pro.rc["axes.grid"] = False
     pro.rc["axes.facecolor"] = "k"
-    
+
     ## Plot and save
     width = 3.31314
-    aspect_ratio = 1 / (3 * 1.61803)
+    aspect_ratio = 1.61803
     height = width * aspect_ratio
     fig, axes = pro.subplots(
-        nrows=8, width=f"{width}in", refheight=f"{height}in", hspace=0.5
+        nrows=8, ncols=2, width=f"{width}in", height=f"{height}in", hspace=0.5, wspace=0.5, spanx=False
     )
-
+    timestamps = list(map(time_from_folder, folders))
     for i, folder in enumerate(tqdm.tqdm(folders)):
     # load data
         with fits.open(
@@ -30,44 +34,58 @@ if __name__ == "__main__":
         ) as hdul:
             polar_cube = hdul[0].data
 
-        rin = np.floor(48 / target_info.dist_pc / pxscales[folder]).astype(int)
+        rin = np.floor(45 / target_info.dist_pc / pxscales[folder]).astype(int)
         rcrit = np.floor(65 / target_info.dist_pc / pxscales[folder]).astype(int)
         rout = np.ceil(110 / target_info.dist_pc / pxscales[folder]).astype(int)
         
         rs = np.arange(polar_cube.shape[0])
-
         mask = (rs >= rin) & (rs <= rout)
+        rs_au = rs[mask] * target_info.dist_pc * pxscales[folder]
+
         ext = (0, 360, rin * pxscales[folder] * target_info.dist_pc, rout * pxscales[folder] * target_info.dist_pc)
 
-
         # PDI images
-        polar_cube_masked = polar_cube[mask]
-        vmax = np.nanmax(polar_cube_masked[:(rcrit - rin)])
+        polar_cube_masked = polar_cube[mask, :]
+        norm_mask = rs_au <= 70
+        vmax = np.nanmax(polar_cube_masked * norm_mask[:, None])
         norm = simple_norm(polar_cube_masked, vmin=0, vmax=vmax, stretch="sinh", sinh_a=0.5)
-        im = axes[i].imshow(polar_cube_masked, extent=ext, norm=norm, vmin=norm.vmin, vmax=norm.vmax, cmap=pro.rc["cmap"])
+        im = axes[i, 0].imshow(polar_cube_masked, extent=ext, norm=norm, vmin=norm.vmin, vmax=norm.vmax)
         # axes[0].colorbar(im)
         labels = label_from_folder(folder).split()
-        axes[i].text(
+        axes[i, 0].text(
             0.01, 0.95, labels[0], transform="axes", c="white", ha="left", va="top",  fontweight="bold"
         )
-        axes[i].text(
+
+        polar_cube_warped = keplerian_warp(polar_cube[mask, :], rs_au, timestamps[i], timestamps[4])
+
+        im = axes[i, 1].imshow(polar_cube_warped, extent=ext, norm=norm, vmin=norm.vmin, vmax=norm.vmax)
+        # axes[0].colorbar(im)
+        labels = label_from_folder(folder).split()
+        axes[i, 0].text(
+            0.01, 0.95, labels[0], transform="axes", c="white", ha="left", va="top",  fontweight="bold"
+        )
+
+        axes[i, 1].text(
             0.99, 0.95, "\n".join(labels[1:]), transform="axes", c="white", ha="right", va="top",  fontweight="bold"
         )
 
     for ax in axes:
-        for offset in (90, 270):
-            ax.axvline(offset + target_info.pos_angle, c="0.9", lw=1)
+        for offset in (90,270):
+            ax.vlines(offset + target_info.pos_angle, ax.get_ylim()[0], 110 - 16.25, c="0.9", lw=0.5, ls="--")
 
+    axes[0, 0].format(title="Original")
+    axes[0, 1].format(title="Keplerian warped")
+    axes[:-1, :].format(xtickloc="none")
+    axes[:, 1:].format(ytickloc="none")
     ## sup title
     axes.format(
         aspect="auto",
         xlabel="Angle E of N (°)",
-        ylabel="Separation (au)",
+        ylabel="",
         xlocator=90,
     )
-
-    axes[:-1].format(xtickloc="none")
+    axes[:, 0].format(xlocator=[0, 90, 180, 270])
 
     fig.savefig(
-        paths.figures / "HD169142_polar_Qphi_outer.pdf", bbox_inches="tight", dpi=300
+        paths.figures / "HD169142_polar_Qphi_outer.pdf", bbox_inches="tight"
     )

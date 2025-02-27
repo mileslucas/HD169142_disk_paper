@@ -9,6 +9,7 @@ from matplotlib import patches
 from target_info import target_info
 from utils_indexing import frame_radii
 from astropy.stats import biweight_location
+from skimage import filters
 from vampires_dpp.image_processing import derotate_frame
 
 
@@ -63,21 +64,14 @@ if __name__ == "__main__":
 
 
     for i, folder in enumerate(folders):
-        stokes_path = paths.data / folder / "diskmap" / f"{folder}_HD169142_diskmap_Qphi_deprojected.fits"
-        Qphi_image, header = fits.getdata(stokes_path, header=True)
-        # radius_path = paths.data / folder / "diskmap" / f"{folder}_HD169142_diskmap_radius.fits"
-        # radius_map_au = fits.getdata(radius_path)
+        Qphi_image_subbed = fits.getdata(paths.data / folder / f"{folder}_HD169142_Qphi_cADI_sim_r2_scaled.fits")
+        radius_path = paths.data / folder / "diskmap" / f"{folder}_HD169142_diskmap_Qphi_radius.fits"
+        radius_map_au = fits.getdata(radius_path)
 
-        radius_map_au = frame_radii(Qphi_image) * pxscales[folder] * target_info.dist_pc
-
-        # radprof = create_radial_profile_image(Qphi_image, frame_radii(Qphi_image))
-        radprof = create_faux_adi_image(Qphi_image)
-
-        Qphi_image_subbed = (Qphi_image - radprof) * radius_map_au**2
-
+        Qphi_image_subbed = filters.gaussian(Qphi_image_subbed, 1)
         Qphi_image_masked = inner_ring_mask(Qphi_image_subbed, radius_map_au)
 
-        side_length = Qphi_image.shape[-1] * pxscales[folder] / 2
+        side_length = Qphi_image_subbed.shape[-1] * pxscales[folder] / 2
         ext = (side_length, -side_length, -side_length, side_length)
 
         vmax = np.nanmax(Qphi_image_masked)

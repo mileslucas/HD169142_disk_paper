@@ -75,12 +75,12 @@ if __name__ == "__main__":
     # axes[1].axhline(20, c="0.9", lw=0.5, alpha=0.8)
 
     norm = simple_norm(alma_data, vmin=0)#, stretch="sinh", sinh_a=0.5)
-    im = axes[0].imshow(alma_data, extent=ext, norm=norm, vmin=norm.vmin, vmax=norm.vmax, cmap="magma")
+    im = axes[0].imshow(alma_data, extent=ext, norm=norm, vmin=norm.vmin, vmax=norm.vmax, cmap="inferno")
 
     data = np.nanmean(images, axis=0)
     # PDI images
     norm = simple_norm(data, vmin=0, stretch="sinh", sinh_a=0.5)
-    im = axes[1].imshow(data, extent=ext, norm=norm, vmin=norm.vmin, vmax=norm.vmax, cmap=pro.rc["cmap"])
+    im = axes[1].imshow(data, extent=ext, norm=norm, vmin=norm.vmin, vmax=norm.vmax)
 
     axes[0].text(
         0.01, 0.95, "ALMA (1.3 mm)", c="white", ha="left", va="top", transform="axes"

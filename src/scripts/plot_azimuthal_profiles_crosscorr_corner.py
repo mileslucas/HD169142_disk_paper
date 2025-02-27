@@ -119,7 +119,7 @@ if __name__ == "__main__":
             lags_degs_per_yr = lags / dt_yr
             axes[row_idx - 1, col_idx].plot(lags_degs_per_yr, xcorr, shadedata=xcorr_err, c="C3")
     
-            if dt_yr < 5:
+            if dt_yr < 5 or "CHARIS" in folder1 or "CHARIS" in folder2:
                 axes[row_idx - 1, col_idx].text(
                     0.97, 0.97, "(*)",
                     c="0.3",

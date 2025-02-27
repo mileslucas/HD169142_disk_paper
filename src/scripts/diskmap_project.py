@@ -125,20 +125,16 @@ def process_alma_data(folder: str, filename: Path):
 
 def process_charis_data(folder: str):
     cube, hdr = fits.getdata(
-        filename=paths.data / folder / f"{folder}_HD169142_Qphi.fits",
+        filename=paths.data / folder / f"{folder}_HD169142_stokes_collapsed.fits",
         header=True,
     )
-    charis_Qphi = crop(cube, 140)
+    charis_Qphi = crop(cube[4], 140)
     tmp_name = paths.data / folder / "diskmap" / f"{folder}_HD169142_diskmap_Qphi"
-    get_diskmap_outputs(charis_Qphi, name=tmp_name, pxscale=hdr["YPIXSCAL"]*3.6e3, rmax=300)
+    get_diskmap_outputs(charis_Qphi, name=tmp_name, pxscale=15.16e-3, rmax=300)
 
-    cube, hdr = fits.getdata(
-        filename=paths.data / folder / f"{folder}_HD169142_Uphi.fits",
-        header=True,
-    )
-    charis_Uphi = crop(cube, 140)
+    charis_Uphi = crop(cube[5], 140)
     tmp_name = paths.data / folder / "diskmap" / f"{folder}_HD169142_diskmap_Uphi"
-    get_diskmap_outputs(charis_Uphi, name=tmp_name, pxscale=hdr["YPIXSCAL"]*3.6e3, rmax=300)
+    get_diskmap_outputs(charis_Uphi, name=tmp_name, pxscale=15.16e-3, rmax=300)
 
 if __name__ == "__main__":
     folders = [

@@ -34,7 +34,7 @@ if __name__ == "__main__":
         nrows=1, width=f"{width}in", height=f"{height}in", hspace=0.25
     )
 
-    common_rs = np.linspace(0, alma_radii.max(), 2 * len(alma_radii))
+    common_rs = np.linspace(7, alma_radii.max(), 2 * len(alma_radii))
     curves = []
     errs = []
     _folders = folders.copy()
@@ -211,6 +211,11 @@ if __name__ == "__main__":
     q = np.sqrt((delta_S - 1) * (aspect_ratio)**5 / 0.043 * alpha_test)
     Mp = q * target_info.stellar_mass * 1047
     
+
+    keck_Mp = 1.96 # M_j
+    keck_q = keck_Mp / 1047 / target_info.stellar_mass
+    keck_alpha = keck_q**2 / ((delta_S - 1) * (aspect_ratio)**5) * 0.043
+
     print(f"Assuming Qphi disk β: {beta}")
     print(f"Qphi disk gap width: {w_I} au, ΔI: {norm_w_I}")
     print(f"Qphi disk h/r: {aspect_ratio}")
@@ -220,6 +225,7 @@ if __name__ == "__main__":
     print(f"Using ⍺: {alpha_test}")
     print(f"Qphi mass ratios: {q}")
     print(f"Qphi planet masses: {Mp} M_J")
+    print(f"Qphi viscosity for {keck_Mp} MJ: {keck_alpha:.1e}")
 
     axes[0].fill_betweenx(axes[0].get_ylim(), r_min - norm_w_S * r_min/2, r_min + norm_w_S * r_min/2, c="0.3", lw=0, alpha=0.1)
 

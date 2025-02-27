@@ -127,15 +127,18 @@ if __name__ == "__main__":
         yformatter="none",
         xlocator=20,
     )
+    axes[1].format(xlim=(-15, 15), xlocator=10)
 
     ymin, ymax = axes[0].get_ylim()
     # inner_kep = [-7.96, -2.23]
-    inner_kep = [-2.46, -8.76]
+    # inner_kep = [-2.46, -8.76]
+    inner_kep = (-5.1 - 1, -5.1 + 1)
     axes[0].fill_betweenx([ymin, ymax], *inner_kep, c="0.3", alpha=0.2, zorder=-1)
 
     ymin, ymax = axes[1].get_ylim()
     # outer_kep = [-1.39, -0.4]
-    outer_kep = [--0.44, -1.53]
+    # outer_kep = [--0.44, -1.53]
+    outer_kep = [-0.907 - 0.072, -0.907 + 0.072]
     axes[1].fill_betweenx([ymin, ymax], *outer_kep, c="0.3", alpha=0.2, zorder=-1)
 
     fig.savefig(
