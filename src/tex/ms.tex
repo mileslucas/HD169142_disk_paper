@@ -9,6 +9,7 @@
 \usepackage{savesym}
 \let\tablenum\relax
 \usepackage{siunitx}[=v2]
+\usepackage{chemformula}
 % redefine deluxetable for compatibility with the array package.
 \let\oldenddeluxetable\endxdeluxetable
 \let\olddeluxetable\xdeluxetable
@@ -29,6 +30,8 @@
 \DeclareSIUnit{\year}{yr}
 \DeclareSIUnit{\parsec}{pc}
 \DeclareSIUnit{\au}{au}
+\DeclareSIUnit{\Msun}{M_\odot}
+\DeclareSIUnit{\Mjup}{M_J}
 
 
 % Begin!
@@ -36,7 +39,7 @@
 \begin{CJK*}{UTF8}{gbsn}
 
 % Title
-\title{Evidence for early-stage planet-formation in the HD 169142 transition disk}
+\title{Dynamical Analysis of the HD 169142 Transition Disk: A Decadal Survey of High-Contrast Polarimetric Images}
 % \shorttitle{A Decadal Analysis of HD 169142}
 
 % Author list
@@ -48,10 +51,11 @@
 
 \input{sections/01_introduction}
 \input{sections/02_observations}
-\input{sections/03_polarimetric_images}
-\input{sections/04_keplerian_analysis}
+\input{sections/03_results}
+\input{sections/04_dynamic_analysis}
 \input{sections/05_compare_to_alma}
 \input{sections/06_discussions}
+\input{sections/07_conclusions}
 \input{acknowledgements}
 
 \bibliography{references}

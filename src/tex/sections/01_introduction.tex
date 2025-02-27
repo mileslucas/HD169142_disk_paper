@@ -1,28 +1,14 @@
 \section{Introduction\label{sec:introduction}}
 
-\begin{figure}
-    \centering
-    \script{plot_disk_schematic.py}
-    \includegraphics[width=\columnwidth]{figures/HD169142_schematic.pdf}
-    \caption{Schematic diagram of the HD169142 transitional disk. The black contours are based on the ALMA 1.3mm continuum data which trace out an inner disk (B0) a close inner ring (B1) and three outer rings (B2-B4). The red. contours are based on visible to near-IR scattered-light images, separated into an inner and outer ring.\label{fig:disk_schematic}}
-\end{figure}
 
-\begin{deluxetable}{lcll}
-    \centering
-    \tablecaption{HD 169142 adopted parameters.\label{tbl:system}}
-    \tablehead{
-        \colhead{Parameter} &
-        \colhead{Value} & 
-        \colhead{Unit} & 
-        \colhead{Ref.}
-    }
-    \startdata
-    \cutinhead{System parameters}
-    Distance & \num{114.87\pm0.35} & \si{pc} & [1] \\
-    $M_\star$ & 1.65 & $M_\odot$ & \\
-    \cutinhead{Disk parameters}
-    Inclination & \num{12.5} & deg &  \\
-    Position angle & \num{5} & deg &  \\
-    \enddata
-    \tablerefs{[1]: \citealt{gaia_collaboration_gaia_2021}}
-\end{deluxetable}
+Exoplanet detection and characterization is one of the frontiers in modern observational astronomy, driven by cutting-edge instrumentation. In recent decades, thousands of exoplanets have been discovered, revealing a great diversity of planetary systems and architectures. However, the understanding of how these systems formed and evolved remains limited, with discrepancies between the observed planets and theories of planet formation. 
+
+Direct observations of protoplanetary disks offer the best way to study planet formation by resolving features like spirals, ring gaps, and clumps \citep{andrews_observations_2020,benisty_optical_2023}. These features indicate over- and under-densities of disk material, which can be signatures of planet formation.
+
+Major surveys have already detected most visibly bright disks ($m_{\text R}<$12) in nearby star-forming regions ($d <$ \SIrange{150}{400}{\parsec}; e.g., \citealt{avenhaus_disks_2018,garufi_disks_2020,rich_gemini-lights_2022,ren_protoplanetary_2023,valegard_sphere_2024,ginski_sphere_2024,garufi_sphere_2024}). Further advancements in disk science require shifting from detection to in-depth characterization.
+
+High-contrast polarimetric imaging is the most powerful tool for studying planet-forming disks at optical to near-infrared wavelengths \citep{benisty_optical_2023}. This technique uses adaptive optics correction, large-diameter telescopes, coronagraphs for starlight suppression, polarization optics, and low-noise detectors to achieve the angular resolution and sensitivity required for detecting faint disk structures close to the intense diffracted light of the star.
+
+The key advantage of polarimetry is that starlight reflected off disk material is partially polarized (20\% - 70\% at peak), whereas the star is unpolarized. Using a polarimeter to split and then subtract orthogonal polarization states cancels out the unpolarized stellar light to reveal the disk, known as polarimetric differential imaging (PDI; \citealt{kuhn_imaging_2001}). This cancellation attenuates the stellar signal without biases that alter the morphology and photometry of the disk, unlike typical point-spread function (PSF) subtraction techniques \citep{soummer_detection_2012,benisty_optical_2023}.
+
+In this paper, we present dynamical analysis of polarimetric images of the planet-forming disk HD169142. We will present a combination of archival PDI images and new observations with scexao (\autoref{sec:observations}). We present the observations 
