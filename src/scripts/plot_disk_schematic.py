@@ -104,6 +104,16 @@ if __name__ == "__main__":
     ax.text(66, 23, "Outer", va="center", **text_kwargs)
 
 
+    # protoplanet b
+    r = 36.4 # au
+    theta0 = 34.9
+    y = r * np.sin(np.deg2rad(theta0 + 90))
+    x = r * np.cos(np.deg2rad(theta0 + 90))
+    ax.scatter(x, y, marker="+", c="0.2", s=30, lw=0.5)
+    ax.text(
+        x + 3, y + 3, "b", fontsize=6, ha="center", va="center", c="0.2"
+    )
+
     # scale bar
     bar_width_au = 20 # au
     bar_location = 60
