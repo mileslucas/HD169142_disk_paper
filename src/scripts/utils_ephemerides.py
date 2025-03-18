@@ -58,7 +58,7 @@ def keplerian_warp2d(frame, radii_au, time: time.Time, ref_time: time.Time):
     angular_velocity = calculate_keplerian_angular_velocity(radii_au) # deg / yr
     if _DISK_DIR == "CW":
         angular_velocity *= -1
-    total_angular_motion = angular_velocity * delta_t_yr # deg
+    total_angular_motion = -angular_velocity * delta_t_yr # deg
         
     ys, xs = np.indices(frame.shape)
     cy, cx = np.array(frame.shape) / 2 - 0.5
@@ -68,5 +68,5 @@ def keplerian_warp2d(frame, radii_au, time: time.Time, ref_time: time.Time):
     ys_new = rs * np.sin(np.deg2rad(theta_new)) + cy
     xs_new = rs * np.cos(np.deg2rad(theta_new)) + cx
 
-    warped_frame = cv2.remap(frame.astype('f4'), xs_new.astype('f4'), ys_new.astype('f4'), interpolation=cv2.INTER_LANCZOS4, borderMode=cv2.BORDER_WRAP)
+    warped_frame = cv2.remap(frame.astype('f4'), xs_new.astype('f4'), ys_new.astype('f4'), interpolation=cv2.INTER_LANCZOS4)
     return warped_frame
