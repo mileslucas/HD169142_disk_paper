@@ -10,7 +10,7 @@ from target_info import target_info
 from utils_organization import folders, pxscales, label_from_folder, time_from_folder
 from utils_plots import setup_rc
 from utils_ephemerides import keplerian_warp
-
+from matplotlib import patches
 
 if __name__ == "__main__":
     setup_rc()
@@ -66,6 +66,8 @@ if __name__ == "__main__":
         axes[i, 1].text(
             0.99, 0.95, "\n".join(labels[1:]), transform="axes", c="white", ha="right", va="top",  fontweight="bold"
         )
+
+
 
     for ax in axes:
         for offset in (90,270):

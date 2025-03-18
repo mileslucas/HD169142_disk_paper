@@ -71,7 +71,8 @@ if __name__ == "__main__":
         data = interpolate.griddata((_rs.ravel(), _ths.ravel()), polar_cube_warped.ravel(), (rs_grid.ravel(), thetas_grid.ravel()), method="cubic").reshape((len(common_rs), len(common_thetas)))
         images.append(data / np.nanmedian(data))
 
-    axes[0].axhline(20, c="0.9", lw=0.5, alpha=0.8)
+    axes[0].axhline(20, c="w", ls=":", lw=0.7, alpha=0.8)
+    axes[0].text(0.99, 0.15, r"H$_2$O snowline", c="w", alpha=0.9, fontsize=6, transform="axes", ha="right", va="center")
     # axes[1].axhline(20, c="0.9", lw=0.5, alpha=0.8)
 
     norm = simple_norm(alma_data, vmin=0)#, stretch="sinh", sinh_a=0.5)

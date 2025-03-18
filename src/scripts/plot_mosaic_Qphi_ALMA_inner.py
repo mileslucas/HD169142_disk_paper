@@ -27,7 +27,7 @@ if __name__ == "__main__":
     alma_ys = np.linspace(alma_ext[0], alma_ext[1], alma_data.shape[0])
     alma_xs = np.linspace(alma_ext[2], alma_ext[3], alma_data.shape[1])
 
-    fig, axes = pro.subplots(ncols=4, nrows=2, width="7in", hspace=1.75, wspace=0.5, spanx=False)
+    fig, axes = pro.subplots(ncols=4, nrows=2, width="7in", hspace=1.75, wspace=0.5, share=False)
 
 
     for i, folder in enumerate(folders):
@@ -69,20 +69,38 @@ if __name__ == "__main__":
 
         # star position
         axes[i].scatter(0, 0, marker="+", lw=1, markersize=50, c="white")
+        # scale bar
+        bar_width_arc = 0.1125
+        bar_width_height = bar_width_arc / 20
+        bar_width_au = bar_width_arc * target_info.dist_pc
+        rect = patches.Rectangle([0.3, -0.32 - bar_width_height/2], -bar_width_arc, bar_width_height, color="white")
+        axes[i].add_patch(rect)
 
-        # PSF
+    axes[0].text(
+        0.3 - bar_width_arc / 2,
+        -0.32 + bar_width_arc/5,
+        f"{bar_width_au:.0f} au",
+        c="white",
+        ha="center",
+        fontsize=7
+    )
         
 
 
     axes.format(
-        xlim=(0.32, -0.32),
-        ylim=(-0.32, 0.32),
-        # xlocator=[0.6, 0.3, 0, -0.3, -0.6],
-        # ylocator=[-0.6, -0.3, 0, 0.3, 0.6],
-        # xlabel=r'$\Delta$RA (")',
-        # ylabel=r'$\Delta$DEC (")',
+        xlim=(0.35, -0.35),
+        ylim=(-0.35, 0.35),
         xlocator="none",
         ylocator="none"
+    )
+    axes[:, 0].format(
+        ylocator=[-0.3, -0.15, 0, 0.15, 0.3],
+        ylabel=r'$\Delta$DEC (")',
+    )
+    axes[-1, :].format(
+        xlocator=[-0.3, -0.15, 0, 0.15, 0.3],
+        xlabel=r'$\Delta$RA (")',
+
     )
 
     # axes[1].format(yspineloc="none")

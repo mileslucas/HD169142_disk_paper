@@ -5,6 +5,8 @@ import proplot as pro
 from astropy.visualization import simple_norm
 from utils_organization import label_from_folder, folders, pxscales
 from utils_plots import setup_rc
+from matplotlib import patches
+from target_info import target_info
 
 def inner_ring_mask(frame, radii):
     rin_au = 15
@@ -62,7 +64,21 @@ if __name__ == "__main__":
 
         # star position
         axes[i].scatter(0, 0, marker="+", lw=0.7, markersize=20, c="white")
+        # scale bar
+        bar_width_arc = 0.3
+        bar_width_height = bar_width_arc / 20
+        bar_width_au = bar_width_arc * target_info.dist_pc
+        rect = patches.Rectangle([0.75, -0.8 - bar_width_height/2], -bar_width_arc, bar_width_height, color="white")
+        axes[i].add_patch(rect)
 
+    axes[0].text(
+        0.75 - bar_width_arc / 2,
+        -0.8 + bar_width_arc/5,
+        f"{bar_width_au:.0f} au",
+        c="white",
+        ha="center",
+        fontsize=7
+    )
     axes.format(
         xlim=(0.9, -0.9),
         ylim=(-0.9, 0.9),
