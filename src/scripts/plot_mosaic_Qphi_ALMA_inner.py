@@ -44,7 +44,7 @@ if __name__ == "__main__":
         ext = (side_length, -side_length, -side_length, side_length)
 
         vmax = np.nanmax(Qphi_image_masked)
-        norm = simple_norm(Qphi_image, vmin=0, vmax=vmax, stretch="sinh", sinh_a=1)
+        norm = simple_norm(Qphi_image, vmin=0, vmax=vmax, stretch="sinh", sinh_a=0.5)
         axes[i].imshow(Qphi_image, extent=ext, origin="lower", cmap="bone", norm=norm, vmin=norm.vmin, vmax=norm.vmax)
         labels = label_from_folder(folder).split()
         axes[i].text(
@@ -107,7 +107,7 @@ if __name__ == "__main__":
 
     fig.savefig(
         paths.figures / "HD169142_Qphi_mosaic_inner.pdf",
-        bbox_inches="tight", dpi=300
+        bbox_inches="tight"
     )
     levels = np.geomspace(0.05, np.nanmax(alma_data), 5)
     for ax in axes:
@@ -115,5 +115,5 @@ if __name__ == "__main__":
 
     fig.savefig(
         paths.figures / "HD169142_Qphi_ALMA_mosaic_inner.pdf",
-        bbox_inches="tight", dpi=300
+        bbox_inches="tight"
     )

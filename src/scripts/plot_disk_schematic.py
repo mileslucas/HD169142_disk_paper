@@ -58,7 +58,7 @@ if __name__ == "__main__":
     ts = np.linspace(ang - wedge/2, ang + wedge/2, 100)
     ys_d1 = r_d1 * np.sin(np.deg2rad(ts))
     xs_d1 = r_d1 * np.cos(np.deg2rad(ts))
-    ax.plot(xs_d1, ys_d1, ls=":", lw=1, c="0.2")
+    ax.plot(xs_d1, ys_d1, ls=":", lw=1, c="0.2", zorder=15)
     ax.text(r_d1 * np.cos(np.deg2rad(ang)), r_d1 * np.sin(np.deg2rad(ang)), "D1", va="center", **alma_text_kwargs)
 
     r_d2 = 41
@@ -67,7 +67,7 @@ if __name__ == "__main__":
     ts = np.linspace(ang - wedge/2, ang + wedge/2, 100)
     ys_d2 = r_d2 * np.sin(np.deg2rad(ts))
     xs_d2 = r_d2 * np.cos(np.deg2rad(ts))
-    ax.plot(xs_d2, ys_d2, ls=":", lw=1, c="0.2")
+    ax.plot(xs_d2, ys_d2, ls=":", lw=1, c="0.2", zorder=15)
     ax.text(r_d2 * np.cos(np.deg2rad(ang)), r_d2 * np.sin(np.deg2rad(ang)), "D2", va="center", **alma_text_kwargs)
 
     r_d3 = (b2 + b3 - b3_width) / 2
@@ -75,7 +75,7 @@ if __name__ == "__main__":
     ts = np.linspace(ang - wedge/2, ang + wedge/2, 100)
     ys_d3 = r_d3 * np.sin(np.deg2rad(ts))
     xs_d3 = r_d3 * np.cos(np.deg2rad(ts))
-    ax.plot(xs_d3, ys_d3, ls=":", lw=1, c="0.2")
+    ax.plot(xs_d3, ys_d3, ls=":", lw=1, c="0.2", zorder=15)
     ax.text(r_d3 * np.cos(np.deg2rad(ang + 2)), r_d3 * np.sin(np.deg2rad(ang + 2)), "D3", va="center", **alma_text_kwargs)
 
     r_d4 = (b3 + b4 - b4_width) / 2
@@ -83,7 +83,7 @@ if __name__ == "__main__":
     ts = np.linspace(ang - wedge/2, ang + wedge/2, 100)
     ys_d4 = r_d4 * np.sin(np.deg2rad(ts))
     xs_d4 = r_d4 * np.cos(np.deg2rad(ts))
-    ax.plot(xs_d4, ys_d4, ls=":", lw=1, c="0.2")
+    ax.plot(xs_d4, ys_d4, ls=":", lw=1, c="0.2", zorder=15)
     ax.text(r_d4 * np.cos(np.deg2rad(ang - 2)), r_d4 * np.sin(np.deg2rad(ang - 2)), "D4", va="center", **alma_text_kwargs)
 
     ## scattered light
@@ -118,7 +118,7 @@ if __name__ == "__main__":
     bar_width_au = 20 # au
     bar_location = 60
     ax.plot([bar_location, bar_location + bar_width_au], [-95, -95], lw=2, c="k")
-    ax.text(bar_location + bar_width_au/2, -95 + 3, f"{bar_width_au} au", ha="center", va="bottom")
+    ax.text(bar_location + bar_width_au/2, -95 + 3, f"{bar_width_au} au", ha="center", va="bottom", fontsize=8)
 
 
     ax.format(xlim=(-110, 110), ylim=(-110, 110), grid=False)

@@ -54,7 +54,7 @@ if __name__ == "__main__":
         norm_image = image - image_mean
 
         norm = pro.DivergingNorm()
-        im = axes[i].imshow(norm_image, extent=ext, cmap="div", norm=norm)
+        im = axes[i].imshow(norm_image, extent=ext, cmap="BuRd", norm=norm)
         # axes[0].colorbar(im)
         labels = label_from_folder(folder).split()
         axes[i].text(
