@@ -15,10 +15,11 @@ import logging
 from matplotlib import patches
 from utils_ephemerides import keplerian_warp2d
 from astropy.time import Time
+import cv2
 
 logger = logging.getLogger(__file__)
 
-GIF_FPS = 10
+GIF_FPS = 12
 YEAR_PER_SEC = 1.5
 
 
@@ -41,8 +42,8 @@ def motion_interpolation(t, t0, t1, frame0, frame1, radii_au):
     for ti in t:
         tfrac = (ti - t0) / (t1 - t0)
         time_now = Time(ti, format="mjd")
-        frame_b = keplerian_warp2d(frame0, radii_au, time_now, Time(t0, format="mjd"))
-        frame_f = keplerian_warp2d(frame1, radii_au, time_now, Time(t1, format="mjd"))
+        frame_b = keplerian_warp2d(frame0, radii_au, Time(t0, format="mjd"), time_now)
+        frame_f = keplerian_warp2d(frame1, radii_au, Time(t1, format="mjd"), time_now)
         frame = (1 - tfrac) * frame_b + tfrac * frame_f
         frames.append(frame)
 
@@ -53,7 +54,7 @@ def motion_interpolation(t, t0, t1, frame0, frame1, radii_au):
 def get_frames():
     frames = {}
     r2_maps = {}
-    for folder in folders:
+    for folder in folders[:-1]:
         filename = paths.data / folder / "diskmap" / f"{folder}_HD169142_diskmap_Qphi_deprojected.fits"
         data = fits.getdata(filename, memmap=False)
         rs_px = frame_radii(data)
@@ -73,23 +74,15 @@ def regrid_frames(frames, r2_maps):
     max_rad = np.sqrt(min(np.max(m) for m in r2_maps.values()))
     grid_vec = np.arange(-max_rad, max_rad, spacing_au)
 
-    grid_ys, grid_xs = np.meshgrid(grid_vec, grid_vec)
+    grid_xs_au, grid_ys_au = np.meshgrid(grid_vec, grid_vec)
 
     regridded = {}
     for folder, frame in frames.items():
-        _ys, _xs = np.indices(frame.shape).astype("f8")
         cy, cx = np.array(frame.shape) / 2 - 0.5
-        _ys -= cy
-        _xs -= cx
-        _ys_au = _ys * pxscales[folder] * target_info.dist_pc
-        _xs_au = _xs * pxscales[folder] * target_info.dist_pc
-        data = interpolate.griddata(
-            (_ys_au.ravel(), _xs_au.ravel()), 
-            frame.ravel(),
-            (grid_ys.ravel(), grid_xs.ravel()),
-            method="cubic"
-        )
-        regridded[folder] = data.reshape((len(grid_vec), len(grid_vec)))
+        grid_ys = grid_ys_au / (pxscales[folder] * target_info.dist_pc) + cy
+        grid_xs = grid_xs_au / (pxscales[folder] * target_info.dist_pc) + cx
+        regridded_frame = cv2.remap(frame.astype("f4"), grid_xs.astype("f4"), grid_ys.astype("f4"), interpolation=cv2.INTER_LANCZOS4)
+        regridded[folder] = regridded_frame
     return regridded, min_pxscale
 
 def normalize_frames(frames, r2_maps):
@@ -99,9 +92,9 @@ def normalize_frames(frames, r2_maps):
         r2_map = r2_maps[folder]
         _masked = inner_ring_mask(frame, np.sqrt(r2_map))
         vmax = np.nanmax(_masked)
-        # norm = simple_norm(frame, vmin=0, vmax=vmax, stretch="sinh", sinh_a=1)
-        norm = simple_norm(frame, vmin=0, vmax=vmax)
-        output[folder] = norm(frame).filled()**2
+        norm = simple_norm(frame, vmin=0, vmax=vmax, stretch="sinh", sinh_a=0.5)
+        # norm = simple_norm(frame, vmin=0, vmax=vmax)
+        output[folder] = norm(frame, clip=True)
     return output
 
 def interpolate_frames(timestamps, frames, rad_au):
@@ -124,7 +117,7 @@ def interpolate_frames(timestamps, frames, rad_au):
 
 def _str_from_timestamp(timestamp):
     time = Time(timestamp, format="mjd")
-    return time.strftime("%Y/%m/%d")
+    return time.strftime("%Y/%m")
 
 def plot_frames(frames, timestamps, pxscale):
     # Create figure
@@ -137,7 +130,7 @@ def plot_frames(frames, timestamps, pxscale):
     image = ax.imshow(frames[0], cmap="bone", extent=ext, vmin=0, vmax=1)
     label = ax.text(
         0.03, 0.97, _str_from_timestamp(timestamps[0]),
-        fontsize=8,
+        fontsize=9,
         transform="axes",
         c="w",
         fontweight="bold",
@@ -148,9 +141,9 @@ def plot_frames(frames, timestamps, pxscale):
     # star position
     ax.scatter(0, 0, marker="+", lw=1, markersize=50, c="white")
     # scale bar
-    bar_width_arc = 0.1125
+    bar_width_au = 15
+    bar_width_arc = bar_width_au / target_info.dist_pc
     bar_width_height = bar_width_arc / 20
-    bar_width_au = bar_width_arc * target_info.dist_pc
     rect = patches.Rectangle([0.3, -0.32 - bar_width_height/2], -bar_width_arc, bar_width_height, color="white")
     ax.add_patch(rect)
 
@@ -160,7 +153,7 @@ def plot_frames(frames, timestamps, pxscale):
         f"{bar_width_au:.0f} au",
         c="white",
         ha="center",
-        fontsize=7
+        fontsize=9
     )
 
     ax.format(
@@ -176,13 +169,13 @@ def plot_frames(frames, timestamps, pxscale):
         return image,label
 
     # Create animation
-    ani = animation.FuncAnimation(fig, update, frames=len(frames), interval=1000 // GIF_FPS, blit=False, repeat=False, save_count=len(frames))
+    ani = animation.FuncAnimation(fig, update, frames=len(frames), interval=1000 // GIF_FPS, blit=False, repeat=True, save_count=len(frames))
 
     # Save video (requires ffmpeg or mencoder)
     plt.show()
     ani.save(
         paths.figures / "HD169142_2012-2024_keplerian.gif", 
-        writer=animation.PillowWriter(fps=GIF_FPS),
+        writer=animation.ImageMagickFileWriter(fps=GIF_FPS),
         # writer=animation.FFMpegWriter(fps=GIF_FPS, extra_args=['-vcodec', 'libx264']),
         progress_callback=lambda i, n: print(f'Saving frame {i} of {n}')
     )
@@ -190,7 +183,7 @@ def plot_frames(frames, timestamps, pxscale):
 
 if __name__ == "__main__":
     setup_rc()
-    
+    pro.rc["animation.convert_path"] = "/Users/mileslucas/software/convert"
     logger.info("Loading frames")
     frames, r2_maps = get_frames()
 
