@@ -41,30 +41,31 @@ if __name__ == "__main__":
     thetas_grid, rs_grid = np.meshgrid(common_thetas, common_rs)
     images= []
     for i, folder in enumerate(tqdm.tqdm(folders)):
+        if "CHARIS" in folder:
+            continue
 
-    # load data
-        with fits.open(
+        # load data
+        polar_frame = fits.getdata(
             paths.data
             / folder
             / f"{folder}_HD169142_Qphi_polar.fits"
-        ) as hdul:
-            polar_cube = hdul[0].data
+        )
 
 
         rin = np.floor(45 / (target_info.dist_pc * pxscales[folder]))
         rout = np.ceil(90 / (target_info.dist_pc * pxscales[folder]))
 
-        rs = np.arange(polar_cube.shape[0])
+        rs = np.arange(polar_frame.shape[0])
 
         mask = (rs >= rin) & (rs <= rout)
         ext = (0, 360, rin * pxscales[folder] * target_info.dist_pc, rout * pxscales[folder] * target_info.dist_pc)
         rs_au = rs[mask] * target_info.dist_pc * pxscales[folder]
 
         this_time = time_from_folder(folder)
-        polar_cube_warped = keplerian_warp(polar_cube[mask, :], rs_au, this_time, alma_time)
+        polar_frame_warped = keplerian_warp(polar_frame[mask, :], rs_au, this_time, alma_time)
 
         rs_grid_norm = (rs_grid - rs_au.min()) / (target_info.dist_pc * pxscales[folder])
-        data = cv2.remap(polar_cube_warped, thetas_grid.astype("f4"), rs_grid_norm.astype("f4"), cv2.INTER_LANCZOS4)
+        data = cv2.remap(polar_frame_warped, thetas_grid.astype("f4"), rs_grid_norm.astype("f4"), cv2.INTER_LANCZOS4)
 
         images.append(data / np.nanmedian(data))
 

@@ -98,7 +98,7 @@ if __name__ == "__main__":
 
     fig.savefig(
         paths.figures / "HD169142_Qphi_mosaic.pdf",
-        bbox_inches="tight", dpi=300
+        bbox_inches="tight"
     )
     levels = np.geomspace(0.05, np.nanmax(alma_data), 5)
     for ax in axes:
@@ -106,5 +106,5 @@ if __name__ == "__main__":
 
     fig.savefig(
         paths.figures / "HD169142_Qphi_ALMA_mosaic.pdf",
-        bbox_inches="tight", dpi=300
+        bbox_inches="tight"
     )

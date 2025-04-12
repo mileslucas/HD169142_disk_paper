@@ -9,36 +9,47 @@ masses = [
     (1.65, 0.2), # B06
 ]
 
-def mean_and_std(values):
+# def mean_and_std(values):
+#     _vals = np.array([v[0] for v in values])
+#     _errs = np.array([v[1] for v in values])
+#     N = len(values)
+#     mean = np.mean(_vals)
+#     std = np.std(_vals) / np.sqrt(N)
+#     rms = np.sqrt(np.sum(_errs**2)) / N
+#     err = np.hypot(std, rms)
+#     return mean, err
+
+def weighted_mean_and_std(values):
     _vals = np.array([v[0] for v in values])
     _errs = np.array([v[1] for v in values])
-    N = len(values)
-    mean = np.mean(_vals)
-    std = np.std(_vals) / np.sqrt(N)
-    rms = np.sqrt(np.sum(_errs**2)) / N
-    err = np.hypot(std, rms)
-    return mean, err
+    weights = 1 / _errs**2
+    weights_sum = np.sum(weights)
+    mean = np.sum(_vals * weights) / weights_sum
+    stderr = np.sqrt( 1 / weights_sum)
+    return mean, stderr
 
-_mass, _mass_err = mean_and_std(masses)
+_mass, _mass_err = weighted_mean_and_std(masses)
 ages = [
     (6, 3, 6), # G07
     (8.98, 3.9, 11.02), # R22
     (12, 12 - 4, 12 + 8),
 ]
 
-def uneven_mean_and_std(values):
+def uneven_weighted_mean_and_std(values):
     _vals = np.array([v[0] for v in values])
     _errs_low = np.array([v[1] for v in values])
     _errs_hi = np.array([v[2] for v in values])
-    _errs_ave = np.sqrt(_errs_low * _errs_hi)
-    N = len(values)
-    mean = np.mean(_vals)
-    std = np.std(_vals) / np.sqrt(N)
-    rms = np.sqrt(np.sum(_errs_ave**2)) / N
-    err = np.hypot(std, rms)
-    return mean, err
 
-_stellar_age, _stellar_age_err = uneven_mean_and_std(ages)
+    sigma_eff = 2 * _errs_hi * _errs_low / (_errs_hi + _errs_low)
+
+    weights = 1 / sigma_eff**2
+    weights_sum = np.sum(weights)
+
+    mean = np.sum(weights * _vals) / weights_sum
+    stderr = np.sqrt(1 / weights_sum)
+    return mean, stderr
+
+_stellar_age, _stellar_age_err = uneven_weighted_mean_and_std(ages)
 
 @dataclass(repr=True)
 class TargetInfo:
@@ -58,5 +69,5 @@ class TargetInfo:
 target_info = TargetInfo()
 
 if __name__ == "__main__":
-    print(target_info.stellar_mass, target_info.stellar_mass_err)
-    print(target_info.stellar_age, target_info.stellar_age_err)
+    print(f"M= {target_info.stellar_mass:.02f} ± {target_info.stellar_mass_err:.02f} Msun")
+    print(f"t= {target_info.stellar_age:.01f} ± {target_info.stellar_age_err:.01f} Myr")

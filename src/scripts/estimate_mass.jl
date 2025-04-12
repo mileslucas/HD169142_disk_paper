@@ -3,7 +3,7 @@ using Unitful
 using UnitfulAstro
 using CSV, DataFrames
 
-Mstar = (1.79±0.17)u"Msun"
+Mstar = (1.89±0.08)u"Msun"
 
 cc_values = CSV.read("/Users/mileslucas/research/papers/HD169142_disk_paper/src/data/cross_correlation_peaks.csv", DataFrame, header=false)
 peak_values = CSV.read("/Users/mileslucas/research/papers/HD169142_disk_paper/src/data/radial_profile_peaks.csv", DataFrame, header=false)

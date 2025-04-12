@@ -8,6 +8,10 @@ from utils_crosscorr import phase_correlogram, bootstrap_phase_correlogram
 from utils_errorprop import bootstrap_argmax_and_max
 from utils_plots import setup_rc
 
+def gaussian(x, x0, sigma):
+    diff = (x - x0) / sigma
+    return np.exp(-0.5 * diff**2)
+
 if __name__ == "__main__":
     setup_rc()
 
@@ -21,15 +25,19 @@ if __name__ == "__main__":
 
     spacing = x[1] - x[0]
 
-    A = np.sin(x)  # Base signal
+    # A = np.sin(x)  # Base signal
+    A = gaussian(x, x0=1, sigma=0.2)
     A_err = 0.05 * np.random.randn(len(x))
     A += A_err # +noise
     
     lag_known = 2  # Known shift in indices
     print(f"Lag: {lag_known}")
-    B = np.sin(x - lag_known)
+    B = gaussian(x, x0=3, sigma=0.2)
+    # B = np.sin(x - lag_known)
     B_err = 0.05 * np.random.randn(len(x))
     B += B_err
+
+    
 
 
 
@@ -42,7 +50,8 @@ if __name__ == "__main__":
 
     axes[1].plot(lags, xcorr, shadedata=xcorr_err, c="C0")
     mask = (lags >= 0) & (lags <= np.pi)
-    peaklag, peaklagerr = bootstrap_argmax_and_max(lags[mask], xcorr[mask], xcorr_err[mask])
+
+    peaklag, peaklagerr, _, _ = bootstrap_argmax_and_max(lags[mask], xcorr[mask], xcorr_err[mask])
     axes[1].axvline(peaklag, c="C0", lw=1, ls="--", alpha=0.6)
     axes[1].axvline(lag_known, c="C0", lw=1, alpha=0.6)
     print(f"{peaklag} +- {peaklagerr}")
