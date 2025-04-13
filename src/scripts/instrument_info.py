@@ -1,5 +1,6 @@
 from typing import Final
 
+
 class VAMPIRESInfo:
     iwas: Final = {
         "20230707_VAMPIRES": 105,
@@ -36,11 +37,14 @@ irdis_info = IRDISInfo()
 class GPIInfo:
     pxscale = 14.14e-3
 
+
 gpi_info = GPIInfo()
+
 
 class ALMAInfo:
     pxscale = (0, 0)
-    noise = 14.7e-3 # mJy / beam == 15uJy / beam
-    fwhm = (27, 20) # mas
+    noise = 14.7e-3  # mJy / beam == 15uJy / beam
+    fwhm = (27, 20)  # mas
+
 
 alma_info = ALMAInfo()

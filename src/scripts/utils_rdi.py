@@ -1,10 +1,5 @@
-from winnie_pcrdi import (
-    crop_data,
-    dist_to_pt,
-    rdi_residuals,
-    sigma_clipped_axis_nanmean_general,
-)
 import numpy as np
+from winnie_pcrdi import crop_data, dist_to_pt, rdi_residuals, sigma_clipped_axis_nanmean_general
 
 
 def rdi(sci_cube, ref_cube, pas, rmin, rmax, half_width):
@@ -42,7 +37,5 @@ def rdi(sci_cube, ref_cube, pas, rmin, rmax, half_width):
         parangs=-pas,
         cent=cent,
     )
-    imcube0 = sigma_clipped_axis_nanmean_general(
-        hcube_res_derot, n=3, axis=0, fast=True
-    )
+    imcube0 = sigma_clipped_axis_nanmean_general(hcube_res_derot, n=3, axis=0, fast=True)
     return imcube0

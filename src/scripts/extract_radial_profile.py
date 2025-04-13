@@ -1,22 +1,19 @@
-import proplot as pro
 import numpy as np
-import paths
-from astropy.io import fits
-from astropy.convolution import convolve, kernels
-import tqdm
-from astropy.stats import biweight_location, biweight_scale
-import polarTransform as pt
 import pandas as pd
+import paths
+import tqdm
+from astropy.convolution import convolve, kernels
+from astropy.io import fits
 from astropy.nddata import Cutout2D
-from utils_organization import folders, pxscales
 from instrument_info import alma_info
 from target_info import target_info
+from utils_organization import folders, pxscales
 
 vampires_filters = ["F610", "F670", "F720", "F760"]
 vampires_psfs = [
-    fits.getdata(paths.data / f"VAMPIRES_{filt}_synthpsf.fits")
-    for filt in vampires_filters
+    fits.getdata(paths.data / f"VAMPIRES_{filt}_synthpsf.fits") for filt in vampires_filters
 ]
+
 
 def crop(data, window):
     cy, cx = np.array(data.shape[-2:]) / 2 - 0.5
@@ -30,28 +27,26 @@ def get_radial_profile(image, image_err, radii):
     counts = []
     errs = []
     for i in range(len(bins) - 1):
-        mask = (radii >= bins[i]) & (radii <  bins[i + 1]) & np.isfinite(image)
+        mask = (radii >= bins[i]) & (radii < bins[i + 1]) & np.isfinite(image)
         data = image[mask]
-        mean = np.nanmean(data)
-        std = np.nanstd(data)
-        stderr = std / np.sqrt(data.size)
-        rmserr = np.sqrt(np.nansum(image_err[mask]**2)) / data.size
+        err = image_err[mask]
+        mean = np.mean(data)
+        stderr = np.std(data) / np.sqrt(data.size)
+        rmserr = np.sqrt(np.nansum(err**2)) / data.size
 
         counts.append(mean)
         errs.append(np.hypot(stderr, rmserr))
-    
+
     bin_centers = (bins[:-1] + bins[1:]) / 2
     result = {"radius": bin_centers, "profile": np.array(counts), "error": np.array(errs)}
     return result
+
 
 def process_vampires(folder: str) -> None:
     date = folder.split("_")[0]
     # load data
     with fits.open(
-        paths.data
-        / folder
-        / "optimized"
-        / f"{date}_HD169142_vampires_stokes_cube_optimized.fits"
+        paths.data / folder / "optimized" / f"{date}_HD169142_vampires_stokes_cube_optimized.fits"
     ) as hdul:
         stokes_cube = hdul[0].data
 
@@ -62,18 +57,16 @@ def process_vampires(folder: str) -> None:
 
     r2_map = radius_map**2
 
-
     # warp to polar coordinates
     psf = np.sum(vampires_psfs, axis=0)
     psf /= np.sum(psf)
 
     _data = convolve(crop(stokes_cube[4], 400), psf) * r2_map
-    _err = convolve(crop(stokes_cube[5], 400), psf) * r2_map
+    _err = np.sqrt(convolve(crop(stokes_cube[5] ** 2, 400), psf**2)) * r2_map
 
     # print(folder, mask_name)
     # quickplot(_data, _err)
     info = get_radial_profile(_data, _err, radius_map)
-
 
     output_df = pd.DataFrame(
         {
@@ -90,25 +83,23 @@ def process_vampires(folder: str) -> None:
 
 def process_naco(folder: str) -> None:
     # load data
-    Qphi = fits.getdata(
-        paths.data / folder / "coadded" / "Q_phi.fits",
-        ext=("Q_PHI_CTC_IPS", 1),
-    )
-    Uphi = fits.getdata(
-        paths.data / folder / "coadded" / "U_phi.fits", ext=("U_PHI_CTC_IPS", 1)
-    )
+    Qphi = fits.getdata(paths.data / folder / "coadded" / "Q_phi.fits", ext=("Q_PHI_CTC_IPS", 1))
+    Uphi = fits.getdata(paths.data / folder / "coadded" / "U_phi.fits", ext=("U_PHI_CTC_IPS", 1))
 
-    radius_map = fits.getdata(
-        paths.data / folder / "diskmap" / f"{folder}_HD169142_diskmap_Qphi_radius.fits"
-    ) / target_info.dist_pc / pxscales[folder]
+    radius_map = (
+        fits.getdata(
+            paths.data / folder / "diskmap" / f"{folder}_HD169142_diskmap_Qphi_radius.fits"
+        )
+        / target_info.dist_pc
+        / pxscales[folder]
+    )
     r2_map = radius_map**2
-
 
     kernel_fwhm = 2
     kernel = kernels.Gaussian2DKernel(kernel_fwhm / (2 * np.sqrt(2 * np.log(2))))
     # warp to polar coordinates
     _data = convolve(crop(Qphi, 120), kernel) * r2_map
-    _err = convolve(crop(Uphi, 120), kernel) * r2_map
+    _err = np.sqrt(convolve(crop(Uphi**2, 120), kernel.array**2)) * r2_map
 
     # print(folder, mask_name)
     # quickplot(_data, _err)
@@ -127,28 +118,30 @@ def process_naco(folder: str) -> None:
     output_df.to_csv(output_name, index=False)
 
 
-
 def process_irdis(folder: str) -> None:
     # load data
     cube = fits.getdata(paths.data / folder / f"{folder}_HD169142_stokes_cube.fits")
     Qphi = cube[1]
     Uphi = cube[2]
 
-    radius_map = fits.getdata(
-        paths.data / folder / "diskmap" / f"{folder}_HD169142_diskmap_Qphi_radius.fits"
-    ) / target_info.dist_pc / pxscales[folder]
+    radius_map = (
+        fits.getdata(
+            paths.data / folder / "diskmap" / f"{folder}_HD169142_diskmap_Qphi_radius.fits"
+        )
+        / target_info.dist_pc
+        / pxscales[folder]
+    )
     r2_map = radius_map**2
 
-    kernel_fwhm = 1
+    kernel_fwhm = 2
     kernel = kernels.Gaussian2DKernel(kernel_fwhm / (2 * np.sqrt(2 * np.log(2))))
     # warp to polar coordinates
     _data = convolve(crop(Qphi, 500), kernel) * r2_map
-    _err = convolve(crop(Uphi, 500), kernel) * r2_map
+    _err = np.sqrt(convolve(crop(Uphi**2, 500), kernel.array**2)) * r2_map
     # print(folder, mask_name)
     # quickplot(_data, _err)
     info = get_radial_profile(_data, _err, radius_map)
     _filt = "J" if "2015" in folder else "K"
-
 
     output_df = pd.DataFrame(
         {
@@ -168,18 +161,21 @@ def process_zimpol(folder: str) -> None:
     Qphi = fits.getdata(paths.data / folder / "Qphi.fits")
     Uphi = fits.getdata(paths.data / folder / "Uphi.fits")
 
-    radius_map = fits.getdata(
-        paths.data / folder / "diskmap" / f"{folder}_HD169142_diskmap_Qphi_radius.fits"
-    ) / target_info.dist_pc / pxscales[folder]
+    radius_map = (
+        fits.getdata(
+            paths.data / folder / "diskmap" / f"{folder}_HD169142_diskmap_Qphi_radius.fits"
+        )
+        / target_info.dist_pc
+        / pxscales[folder]
+    )
 
     r2_map = radius_map**2
 
-
-    kernel_fwhm = 1
+    kernel_fwhm = 2
     kernel = kernels.Gaussian2DKernel(kernel_fwhm / (2 * np.sqrt(2 * np.log(2))))
     # warp to polar coordinates
     _data = convolve(Qphi, kernel) * r2_map
-    _err = convolve(Uphi, kernel) * r2_map
+    _err = np.sqrt(convolve(Uphi**2, kernel.array**2)) * r2_map
     # print(folder, mask_name)
     # quickplot(_data, _err)
     info = get_radial_profile(_data, _err, radius_map)
@@ -203,22 +199,25 @@ def process_gpi(folder: str) -> None:
     Qphi = cube[1]
     Uphi = cube[2]
 
-    radius_map = fits.getdata(
-        paths.data / folder / "diskmap" / f"{folder}_HD169142_diskmap_Qphi_radius.fits"
-    ) / target_info.dist_pc / pxscales[folder]
+    radius_map = (
+        fits.getdata(
+            paths.data / folder / "diskmap" / f"{folder}_HD169142_diskmap_Qphi_radius.fits"
+        )
+        / target_info.dist_pc
+        / pxscales[folder]
+    )
 
     r2_map = radius_map**2
 
-    kernel_fwhm = 1
+    kernel_fwhm = 2
     kernel = kernels.Gaussian2DKernel(kernel_fwhm / (2 * np.sqrt(2 * np.log(2))))
     # warp to polar coordinates
     _data = convolve(Qphi, kernel) * r2_map
-    _err = convolve(Uphi, kernel) * r2_map
+    _err = np.sqrt(convolve(Uphi**2, kernel.array**2)) * r2_map
 
     # print(folder, mask_name)
     # quickplot(_data, _err)
     info = get_radial_profile(_data, _err, radius_map)
-
 
     output_df = pd.DataFrame(
         {
@@ -233,29 +232,31 @@ def process_gpi(folder: str) -> None:
     output_df.to_csv(output_name, index=False)
 
 
-
 def process_charis(folder: str) -> None:
     # load data
     cube = fits.getdata(paths.data / folder / f"{folder}_HD169142_stokes_collapsed.fits")
     Qphi = crop(cube[4], 140)
     Uphi = crop(cube[5], 140)
 
-    radius_map = fits.getdata(
-        paths.data / folder / "diskmap" / f"{folder}_HD169142_diskmap_Qphi_radius.fits"
-    ) / target_info.dist_pc / pxscales[folder]
+    radius_map = (
+        fits.getdata(
+            paths.data / folder / "diskmap" / f"{folder}_HD169142_diskmap_Qphi_radius.fits"
+        )
+        / target_info.dist_pc
+        / pxscales[folder]
+    )
 
     r2_map = radius_map**2
 
-    kernel_fwhm = 1
+    kernel_fwhm = 2
     kernel = kernels.Gaussian2DKernel(kernel_fwhm / (2 * np.sqrt(2 * np.log(2))))
     # warp to polar coordinates
     _data = convolve(Qphi, kernel) * r2_map
-    _err = convolve(Uphi, kernel) * r2_map
+    _err = np.sqrt(convolve(Uphi**2, kernel.array**2)) * r2_map
 
     # print(folder, mask_name)
     # quickplot(_data, _err)
     info = get_radial_profile(_data, _err, radius_map)
-
 
     output_df = pd.DataFrame(
         {
@@ -272,12 +273,15 @@ def process_charis(folder: str) -> None:
 
 def process_alma(folder: str) -> None:
     # load data
-    frame = fits.getdata(paths.data / folder / "HD169142.selfcal.concat.GPU-UVMEM.centered_mJyBeam.fits")
+    frame = fits.getdata(
+        paths.data / folder / "HD169142.selfcal.concat.GPU-UVMEM.centered_mJyBeam.fits"
+    )
 
-    radius_map = fits.getdata(
-        paths.data / folder / "diskmap" / f"{folder}_HD169142_diskmap_I_radius.fits"
-    ) / target_info.dist_pc / pxscales[folder]
-
+    radius_map = (
+        fits.getdata(paths.data / folder / "diskmap" / f"{folder}_HD169142_diskmap_I_radius.fits")
+        / target_info.dist_pc
+        / pxscales[folder]
+    )
 
     # warp to polar coordinates
     _data = frame
@@ -296,9 +300,10 @@ def process_alma(folder: str) -> None:
     output_name = paths.data / folder / f"{folder}_HD169142_radial_profiles.csv"
     output_df.to_csv(output_name, index=False)
 
+
 if __name__ == "__main__":
     _folders = [*folders, "20170918_ALMA_1.3mm"]
-    for i, folder in enumerate(tqdm.tqdm(_folders)):
+    for _i, folder in enumerate(tqdm.tqdm(_folders)):
         if "VAMPIRES" in folder:
             process_vampires(folder)
         elif "NACO" in folder:

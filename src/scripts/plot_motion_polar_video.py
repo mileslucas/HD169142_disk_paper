@@ -1,21 +1,19 @@
-import paths
-import proplot as pro
+import logging
+
+import cv2
+import logging_config  # noqa: F401
 import matplotlib.animation as animation
 import matplotlib.pyplot as plt
 import numpy as np
-from astropy.visualization import simple_norm
-from utils_plots import setup_rc
-from utils_organization import folders, time_from_folder, pxscales
-from utils_indexing import frame_radii
+import paths
+import proplot as pro
 from astropy.io import fits
-from target_info import target_info
-from scipy import interpolate
-import logging_config
-import logging
-from matplotlib import patches
-from utils_ephemerides import keplerian_warp
 from astropy.time import Time
-import cv2
+from astropy.visualization import simple_norm
+from target_info import target_info
+from utils_ephemerides import keplerian_warp
+from utils_organization import folders, pxscales, time_from_folder
+from utils_plots import setup_rc
 
 logger = logging.getLogger(__file__)
 
@@ -24,7 +22,6 @@ YEAR_PER_SEC = 1.5
 
 
 def motion_interpolation(t, t0, t1, frame0, frame1, radii_au):
-
     frames = []
     for ti in t:
         tfrac = (ti - t0) / (t1 - t0)
@@ -47,7 +44,7 @@ def get_frames():
 
         rin = np.floor(15 / target_info.dist_pc / pxscales[folder]).astype(int)
         rout = np.ceil(35 / target_info.dist_pc / pxscales[folder]).astype(int)
-        
+
         rs = np.arange(polar_frame.shape[0])
         mask = (rs >= rin) & (rs <= rout)
         rad_aus[folder] = rs[mask] * target_info.dist_pc * pxscales[folder]
@@ -61,18 +58,19 @@ def get_frames():
 
 def normalize_frames(frames):
     output = {}
-    for folder in frames.keys():
+    for folder in frames:
         frame = frames[folder]
         norm = simple_norm(frame, vmin=0, stretch="sinh", sinh_a=0.5)
         output[folder] = norm(frame, clip=True)
     return output
+
 
 def regrid_frames(frames, rad_aus):
     # determine the finest spacing
     min_pxscale = min(pxscales.values())
     spacing_au = min_pxscale * target_info.dist_pc
     # determine maximum extent from smallest FOV
-    common_rs = np.arange(15, 35 + spacing_au/2, spacing_au)
+    common_rs = np.arange(15, 35 + spacing_au / 2, spacing_au)
     common_thetas = np.arange(0, 360 // 5)
 
     grid_ts, grid_rs = np.meshgrid(common_thetas, common_rs)
@@ -80,13 +78,16 @@ def regrid_frames(frames, rad_aus):
     regridded = {}
     for folder, frame in frames.items():
         grid_rs_norm = (grid_rs - rad_aus[folder].min()) / (pxscales[folder] * target_info.dist_pc)
-        regridded_frame = cv2.remap(frame.astype("f4"), grid_ts.astype("f4"), grid_rs_norm.astype("f4"), cv2.INTER_LANCZOS4)
+        regridded_frame = cv2.remap(
+            frame.astype("f4"), grid_ts.astype("f4"), grid_rs_norm.astype("f4"), cv2.INTER_LANCZOS4
+        )
 
         regridded[folder] = regridded_frame
     return regridded, common_rs
 
+
 def interpolate_frames(timestamps, frames, rad_au):
-    # timing, we 
+    # timing, we
     total_year = (timestamps[-1] - timestamps[0]) / 365.25
     total_frames = int(total_year / YEAR_PER_SEC * GIF_FPS)
     times = np.linspace(timestamps[0], timestamps[-1], total_frames)
@@ -107,6 +108,7 @@ def _str_from_timestamp(timestamp):
     time = Time(timestamp, format="mjd")
     return time.strftime("%Y/%m")
 
+
 def plot_frames(frames, timestamps, rad_au):
     # Create figure
     width = 3.31314
@@ -118,33 +120,44 @@ def plot_frames(frames, timestamps, rad_au):
     image = ax.imshow(frames[0], cmap="bone", extent=ext)
 
     label = ax.text(
-       0.01, 0.95, _str_from_timestamp(timestamps[0]), transform="axes", c="white", ha="left", va="top",  fontweight="bold"
+        0.01,
+        0.95,
+        _str_from_timestamp(timestamps[0]),
+        transform="axes",
+        c="white",
+        ha="left",
+        va="top",
+        fontweight="bold",
     )
 
-    ax.format(
-        aspect="auto",
-        xlabel="Angle E of N (°)",
-        ylabel="Separation (au)",
-        xlocator=90,
-    )
+    ax.format(aspect="auto", xlabel="Angle E of N (°)", ylabel="Separation (au)", xlocator=90)
 
     def update(idx):
         image.set_data(frames[idx])
         label.set_text(_str_from_timestamp(timestamps[idx]))
-        return image,label
+        return image, label
 
     # Create animation
-    ani = animation.FuncAnimation(fig, update, frames=len(frames), interval=1000 // GIF_FPS, blit=False, repeat=True, save_count=len(frames))
+    ani = animation.FuncAnimation(
+        fig,
+        update,
+        frames=len(frames),
+        interval=1000 // GIF_FPS,
+        blit=False,
+        repeat=True,
+        save_count=len(frames),
+    )
 
     # Save video (requires ffmpeg or mencoder)
     plt.show()
     ani.save(
-        paths.figures / "HD169142_2012-2024_polar_keplerian.gif", 
+        paths.figures / "HD169142_2012-2024_polar_keplerian.gif",
         writer=animation.ImageMagickFileWriter(fps=GIF_FPS),
         # writer=animation.FFMpegWriter(fps=GIF_FPS, extra_args=['-vcodec', 'libx264']),
-        progress_callback=lambda i, n: print(f'Saving frame {i} of {n}')
+        progress_callback=lambda i, n: print(f"Saving frame {i} of {n}"),
     )
     return ani
+
 
 if __name__ == "__main__":
     setup_rc()
@@ -169,7 +182,5 @@ if __name__ == "__main__":
     logger.info("Interpolating frames")
     frames_itp, times = interpolate_frames(timestamps, frames, common_rad_au)
 
-
     logger.info("Plotting frames")
     plot_frames(frames_itp, times, common_rad_au)
-   

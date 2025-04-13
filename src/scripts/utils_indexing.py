@@ -1,6 +1,7 @@
-from numpy.typing import NDArray
-import numpy as np
 from typing import Literal
+
+import numpy as np
+from numpy.typing import NDArray
 
 
 def frame_center(image: NDArray) -> tuple[float, float]:
@@ -43,9 +44,7 @@ def frame_radii(frame: NDArray, center=None) -> NDArray:
     return radii
 
 
-def frame_angles(
-    frame: NDArray, center=None, conv: Literal["image", "astro"] = "image"
-):
+def frame_angles(frame: NDArray, center=None, conv: Literal["image", "astro"] = "image"):
     """Return the angles of pixels around ``center`` in the image
 
     Parameters
@@ -107,9 +106,7 @@ def cutout_inds(frame, window, center=None, **kwargs):
     half_width = np.asarray(window) / 2
     Ny, Nx = frame.shape[-2:]
     lower = np.maximum(0, np.round(center - half_width), dtype=int, casting="unsafe")
-    upper = np.minimum(
-        (Ny - 1, Nx - 1), np.round(center + half_width), dtype=int, casting="unsafe"
-    )
+    upper = np.minimum((Ny - 1, Nx - 1), np.round(center + half_width), dtype=int, casting="unsafe")
     if np.any(upper - lower + 1 > window):
         upper -= 1
     elif np.any(upper - lower + 1 < window):

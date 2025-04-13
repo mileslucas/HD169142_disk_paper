@@ -1,7 +1,8 @@
+import logging
+
+import numpy as np
 from scipy.optimize import minimize
 from utils_indexing import frame_angles, frame_radii
-import numpy as np
-import logging
 
 logger = logging.getLogger(__file__)
 
@@ -25,10 +26,8 @@ def opt_func(X, stokes_frame):
 
 
 def optimize_Uphi(stokes_frames):
-    X0 = [0,]
-    res = minimize(
-        opt_func, X0, args=(stokes_frames,), method="Nelder-Mead"
-    )
+    X0 = [0]
+    res = minimize(opt_func, X0, args=(stokes_frames,), method="Nelder-Mead")
     return res.x
 
 
@@ -49,11 +48,11 @@ def measure_unres_pol_coeffs(stokes_cube):
     radii = frame_radii(stokes_cube)
     # two annuli
     # inside inner cavity
-    ann_mask = (radii > 20 ) & (radii < 22)
+    ann_mask = (radii > 20) & (radii < 22)
     # one in the known cavity
     ann_mask |= (radii > 42) & (radii < 70)
     # another outside outer ring
-    ann_mask |= (radii > 160)
+    ann_mask |= radii > 160
 
     # Q signal
     Qstar = np.nansum(stokes_cube[2] * ann_mask)
@@ -64,6 +63,7 @@ def measure_unres_pol_coeffs(stokes_cube):
     IUstar = np.nansum(stokes_cube[1] * ann_mask)
     pU = Ustar / IUstar
     return pQ, pU
+
 
 def remove_unres_pol(stokes_cube, pQ, pU):
     out = stokes_cube.copy()
@@ -78,13 +78,10 @@ def remove_unres_pol(stokes_cube, pQ, pU):
 
 def optimize_Uphi_cube(stokes_cube, mask=None, name="HD169142"):
     output_cube = stokes_cube.copy()
-    if mask is not None:
-        stokes_data = np.where(mask, stokes_cube, 0)
-    else:
-        stokes_data = stokes_cube
+    np.where(mask, stokes_cube, 0) if mask is not None else stokes_cube
 
-    opt_pQs = np.zeros(stokes_cube.shape[0])
-    opt_pUs = np.zeros(stokes_cube.shape[0])
+    np.zeros(stokes_cube.shape[0])
+    np.zeros(stokes_cube.shape[0])
     opt_phis = np.zeros(stokes_cube.shape[0])
     # for i in range(stokes_cube.shape[0]):
     #     opt_pQs[i], opt_pUs[i] = measure_unres_pol_coeffs(stokes_data[i])

@@ -1,19 +1,16 @@
 import numpy as np
-import paths
-from astropy.io import fits
-from astropy.convolution import convolve, kernels
-import tqdm
-from astropy.stats import biweight_location, biweight_scale
 import pandas as pd
+import paths
+import tqdm
+from astropy.convolution import convolve, kernels
+from astropy.io import fits
 from astropy.nddata import Cutout2D
-from target_info import target_info
 
 _DEG_PER_PX = 5
 
 vampires_filters = ["F610", "F670", "F720", "F760"]
 vampires_psfs = [
-    fits.getdata(paths.data / f"VAMPIRES_{filt}_synthpsf.fits")
-    for filt in vampires_filters
+    fits.getdata(paths.data / f"VAMPIRES_{filt}_synthpsf.fits") for filt in vampires_filters
 ]
 
 
@@ -30,10 +27,11 @@ def get_azimuthal_profile(image, image_err, azimuth_deg, bin_width=_DEG_PER_PX) 
     errs = []
     finite_mask = np.isfinite(image)
     for i in range(len(bins) - 1):
-        mask = (azimuth_deg >= bins[i]) & (azimuth_deg <  bins[i + 1]) & finite_mask
-        
+        mask = (azimuth_deg >= bins[i]) & (azimuth_deg < bins[i + 1]) & finite_mask
+
         data = image[mask]
         err = image_err[mask]
+
         mean = np.mean(data)
         counts.append(mean)
         N = data.size
@@ -44,9 +42,11 @@ def get_azimuthal_profile(image, image_err, azimuth_deg, bin_width=_DEG_PER_PX) 
     result = {"azimuth": bin_centers, "profile": np.array(counts), "error": np.array(errs)}
     return result
 
+
 def quickplot(Qphi, Uphi):
     import proplot as pro
     from astropy.visualization import simple_norm
+
     fig, axes = pro.subplots(ncols=2)
     norm = simple_norm(Qphi, stretch="asinh", vmin=0)
     axes[0].imshow(Qphi, origin="lower", cmap="magma", norm=norm, vmin=0)
@@ -55,14 +55,12 @@ def quickplot(Qphi, Uphi):
     pro.show(block=True)
     pro.close()
 
+
 def process_vampires(folder: str) -> None:
     date = folder.split("_")[0]
     # load data
     with fits.open(
-        paths.data
-        / folder
-        / "optimized"
-        / f"{date}_HD169142_vampires_stokes_cube_optimized.fits"
+        paths.data / folder / "optimized" / f"{date}_HD169142_vampires_stokes_cube_optimized.fits"
     ) as hdul:
         stokes_cube = hdul[0].data
 
@@ -94,7 +92,7 @@ def process_vampires(folder: str) -> None:
 
     for mask_name, mask in masks.items():
         _data = convolve(crop(stokes_cube[4], 400), psf) * r2_map
-        _err = convolve(crop(stokes_cube[5], 400), psf) * r2_map
+        _err = np.sqrt(convolve(crop(stokes_cube[5] ** 2, 400), psf**2)) * r2_map
         _data[~mask] = np.nan
         _err[~mask] = np.nan
         # print(folder, mask_name)
@@ -122,13 +120,8 @@ def process_vampires(folder: str) -> None:
 
 def process_naco(folder: str) -> None:
     # load data
-    Qphi = fits.getdata(
-        paths.data / folder / "coadded" / "Q_phi.fits",
-        ext=("Q_PHI_CTC_IPS", 1),
-    )
-    Uphi = fits.getdata(
-        paths.data / folder / "coadded" / "U_phi.fits", ext=("U_PHI_CTC_IPS", 1)
-    )
+    Qphi = fits.getdata(paths.data / folder / "coadded" / "Q_phi.fits", ext=("Q_PHI_CTC_IPS", 1))
+    Uphi = fits.getdata(paths.data / folder / "coadded" / "U_phi.fits", ext=("U_PHI_CTC_IPS", 1))
 
     radius_map = fits.getdata(
         paths.data / folder / "diskmap" / f"{folder}_HD169142_diskmap_Qphi_radius.fits"
@@ -149,7 +142,7 @@ def process_naco(folder: str) -> None:
     # warp to polar coordinates
     for mask_name, mask in masks.items():
         _data = convolve(crop(Qphi, 120), kernel) * r2_map
-        _err = convolve(crop(Uphi, 120), kernel) * r2_map
+        _err = np.sqrt(convolve(crop(Uphi**2, 120), kernel.array**2)) * r2_map
         _data[~mask] = np.nan
         _err[~mask] = np.nan
         # print(folder, mask_name)
@@ -200,7 +193,7 @@ def process_irdis(folder: str) -> None:
     # warp to polar coordinates
     for mask_name, mask in masks.items():
         _data = convolve(crop(Qphi, 500), kernel) * r2_map
-        _err = convolve(crop(Uphi, 500), kernel) * r2_map
+        _err = np.sqrt(convolve(crop(Uphi**2, 500), kernel.array**2)) * r2_map
         _data[~mask] = np.nan
         _err[~mask] = np.nan
         # print(folder, mask_name)
@@ -250,7 +243,7 @@ def process_zimpol(folder: str) -> None:
     # warp to polar coordinates
     for mask_name, mask in masks.items():
         _data = convolve(Qphi, kernel) * r2_map
-        _err = convolve(Uphi, kernel) * r2_map
+        _err = np.sqrt(convolve(Uphi**2, kernel.array**2)) * r2_map
         _data[~mask] = np.nan
         _err[~mask] = np.nan
         # print(folder, mask_name)
@@ -301,7 +294,7 @@ def process_gpi(folder: str) -> None:
     # warp to polar coordinates
     for mask_name, mask in masks.items():
         _data = convolve(Qphi, kernel) * r2_map
-        _err = convolve(Uphi, kernel) * r2_map
+        _err = np.sqrt(convolve(Uphi**2, kernel.array**2)) * r2_map
         _data[~mask] = np.nan
         _err[~mask] = np.nan
         # print(folder, mask_name)
@@ -325,6 +318,7 @@ def process_gpi(folder: str) -> None:
     # output_df.dropna(axis=0, how="any", inplace=True)
     output_name = paths.data / folder / f"{folder}_HD169142_azimuthal_profiles.csv"
     output_df.to_csv(output_name, index=False)
+
 
 def process_charis(folder: str) -> None:
     # load data
@@ -352,7 +346,7 @@ def process_charis(folder: str) -> None:
     # warp to polar coordinates
     for mask_name, mask in masks.items():
         _data = convolve(Qphi, kernel) * r2_map
-        _err = convolve(Uphi, kernel) * r2_map
+        _err = np.sqrt(convolve(Uphi**2, kernel.array**2)) * r2_map
         _data[~mask] = np.nan
         _err[~mask] = np.nan
         # print(folder, mask_name)
@@ -380,7 +374,9 @@ def process_charis(folder: str) -> None:
 
 def process_alma(folder: str) -> None:
     # load data
-    frame = fits.getdata(paths.data / folder / "HD169142.selfcal.concat.GPU-UVMEM.centered_mJyBeam.fits")
+    frame = fits.getdata(
+        paths.data / folder / "HD169142.selfcal.concat.GPU-UVMEM.centered_mJyBeam.fits"
+    )
 
     radius_map = fits.getdata(
         paths.data / folder / "diskmap" / f"{folder}_HD169142_diskmap_I_radius.fits"
@@ -421,6 +417,7 @@ def process_alma(folder: str) -> None:
     output_name = paths.data / folder / f"{folder}_HD169142_azimuthal_profiles.csv"
     output_df.to_csv(output_name, index=False)
 
+
 if __name__ == "__main__":
     folders = [
         "20120726_NACO_H",
@@ -434,7 +431,7 @@ if __name__ == "__main__":
         "20230707_VAMPIRES_MBI",
         "20240729_VAMPIRES_MBI",
     ]
-    for i, folder in enumerate(tqdm.tqdm(folders)):
+    for _i, folder in enumerate(tqdm.tqdm(folders)):
         if "VAMPIRES" in folder:
             process_vampires(folder)
         elif "NACO" in folder:

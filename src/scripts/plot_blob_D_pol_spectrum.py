@@ -1,18 +1,14 @@
-import paths
-from astropy.io import fits
 import numpy as np
+import paths
 import proplot as pro
-from astropy.visualization import simple_norm
-from utils_organization import label_from_folder, folders, pxscales, wavelengths
-from utils_plots import setup_rc
+from astropy.io import fits
+from photutils.aperture import ApertureStats, CircularAperture
 from target_info import target_info
 from utils_ephemerides import blob_d_position
-from utils_organization import time_from_folder
 from utils_indexing import frame_radii
-from matplotlib import patches
-from skimage import filters
-from fake_adi_subtraction import create_radial_noise_image
-from photutils.aperture import CircularAperture, ApertureStats
+from utils_organization import folders, pxscales, time_from_folder, wavelengths
+from utils_plots import setup_rc
+
 
 def inner_ring_mask(frame, radii):
     rin_au = 15
@@ -20,24 +16,30 @@ def inner_ring_mask(frame, radii):
     rad_mask = (radii >= rin_au) & (radii <= rout_au)
     return np.where(rad_mask, frame, np.nan)
 
+
 def gap_mask(frame, radii):
     rin_au = 45 - 5
     rout_au = 45 + 5
     rad_mask = (radii >= rin_au) & (radii <= rout_au)
     return np.where(rad_mask, frame, np.nan)
 
+
 if __name__ == "__main__":
     setup_rc()
 
     width = 3.31314
-    aspect_ratio = 1/1.66
+    aspect_ratio = 1 / 1.66
     height = width * aspect_ratio
     fig, axes = pro.subplots(width=f"{width}in", height=f"{height}in")
 
-    for i, folder in enumerate(folders):
-        Qphi_path = paths.data / folder / "diskmap" / f"{folder}_HD169142_diskmap_Qphi_r2_scaled.fits"
+    for _i, folder in enumerate(folders):
+        Qphi_path = (
+            paths.data / folder / "diskmap" / f"{folder}_HD169142_diskmap_Qphi_r2_scaled.fits"
+        )
         Qphi_image, header = fits.getdata(Qphi_path, header=True)
-        Uphi_path = paths.data / folder / "diskmap" / f"{folder}_HD169142_diskmap_Uphi_r2_scaled.fits"
+        Uphi_path = (
+            paths.data / folder / "diskmap" / f"{folder}_HD169142_diskmap_Uphi_r2_scaled.fits"
+        )
         Uphi_image, header = fits.getdata(Uphi_path, header=True)
         radius_map = frame_radii(Qphi_image)
         radius_map_au = radius_map * pxscales[folder] * target_info.dist_pc
@@ -59,7 +61,6 @@ if __name__ == "__main__":
         wl = wavelengths[folder]
         axes[0].scatter(wl, snr)
 
-
     # eph_r, eph_th = blob_d_position(time_from_folder("20180101"))
     # eph_r /= target_info.dist_pc
     # eph_x = -eph_r * np.cos(np.deg2rad(eph_th + 90))
@@ -69,7 +70,7 @@ if __name__ == "__main__":
     axes.format(
         # ylim=(0, 10),
         xlabel=r"$\lambda$ ($\mu$m)",
-        ylabel=r"$Q_\phi$ S/N"
+        ylabel=r"$Q_\phi$ S/N",
     )
 
     # axes[1].format(yspineloc="none")
@@ -78,5 +79,5 @@ if __name__ == "__main__":
     #     paths.figures / "HD169142_Qphi_mosaic_protoplanet.pdf",
     #     bbox_inches="tight", dpi=300
     # )
-    
+
     pro.show(block=True)

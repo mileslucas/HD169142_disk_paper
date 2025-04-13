@@ -1,8 +1,9 @@
+import numpy as np
 import paths
 import proplot as pro
-import numpy as np
 from target_info import target_info
 from utils_plots import setup_rc
+
 
 def rayleigh(scat_angle, pol_max=1):
     alpha = np.cos(scat_angle)
@@ -47,9 +48,7 @@ if __name__ == "__main__":
     axes[0].plot(test_angles, hg_0, c="C3", zorder=5, lw=1, ls=":", label="g=0.4")
     axes[0].plot(test_angles[mask], hg_0[mask], c="C0", zorder=10)
 
-    axes[0].fill_betweenx(
-        axes[0].get_ylim(), min_angle, max_angle, c="C0", alpha=0.2, zorder=0
-    )
+    axes[0].fill_betweenx(axes[0].get_ylim(), min_angle, max_angle, c="C0", alpha=0.2, zorder=0)
     axes.format(xlabel="Scattering angle (°)", ylabel="Polarization fraction")
 
     fig.savefig(paths.figures / "test_spf_coverage.pdf", bbox_inches="tight")

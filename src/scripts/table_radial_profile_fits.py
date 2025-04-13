@@ -1,7 +1,7 @@
-import paths
+import arviz
 import numpy as np
 import pandas as pd
-import arviz
+import paths
 
 dates = ("20230707", "20240729")
 names = ["F610", "F670", "F720", "F760"]
@@ -12,8 +12,8 @@ param_names += ["r_outer", "A_outer", "g1_outer", "g2_outer"]
 if __name__ == "__main__":
     dfs = []
 
-    for i, date in enumerate(dates):
-        for wl_idx, filt_name in enumerate(names):
+    for _i, date in enumerate(dates):
+        for _wl_idx, filt_name in enumerate(names):
             data = np.load(
                 paths.data
                 / date
@@ -25,7 +25,6 @@ if __name__ == "__main__":
             summ.insert(0, "filter", filt_name)
             summ.insert(0, "date", date)
             dfs.append(summ)
-
 
     table = pd.concat(dfs)
     table.to_csv(paths.data / "HD169142_vampires_posterior_summary.csv")

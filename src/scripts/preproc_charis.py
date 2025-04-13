@@ -1,14 +1,15 @@
-from utils_stokes import remove_unres_pol
-import logging_config
 import logging
-import paths
-import tqdm.auto as tqdm
-from astropy.io import fits
-from utils_indexing import frame_radii
-from astropy.stats import biweight_location
+
+import logging_config  # noqa: F401
 import numpy as np
+import paths
+from astropy.io import fits
+from astropy.stats import biweight_location
+from utils_indexing import frame_radii
+from utils_stokes import remove_unres_pol
 
 logger = logging.getLogger(__file__)
+
 
 def measure_unres_pol_coeffs(stokes_cube):
     radii = frame_radii(stokes_cube)
@@ -26,8 +27,11 @@ def measure_unres_pol_coeffs(stokes_cube):
     pU = Ustar / IUstar
     return pQ, pU
 
+
 if __name__ == "__main__":
-    input_file = paths.data / "20230604_CHARIS_JHK" / "20230604_CHARIS_JHK_HD169142_stokes_cube.fits"
+    input_file = (
+        paths.data / "20230604_CHARIS_JHK" / "20230604_CHARIS_JHK_HD169142_stokes_cube.fits"
+    )
 
     stokes_cube_full, hdr = fits.getdata(input_file, header=True)
 

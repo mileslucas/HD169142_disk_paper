@@ -1,18 +1,16 @@
 import numpy as np
-import paths
-from astropy.io import fits
-from astropy.convolution import convolve, kernels
-import tqdm
 import pandas as pd
+import paths
+import tqdm
+from astropy.convolution import convolve, kernels
+from astropy.io import fits
 from astropy.nddata import Cutout2D
-from target_info import target_info
 from utils_ephemerides import keplerian_warp2d
 from utils_organization import time_from_folder
 
 vampires_filters = ["F610", "F670", "F720", "F760"]
 vampires_psfs = [
-    fits.getdata(paths.data / f"VAMPIRES_{filt}_synthpsf.fits")
-    for filt in vampires_filters
+    fits.getdata(paths.data / f"VAMPIRES_{filt}_synthpsf.fits") for filt in vampires_filters
 ]
 t0 = time_from_folder("20180715_zimpol")
 t0 = time_from_folder("20150710_zimpol")
@@ -30,7 +28,7 @@ def get_spf(image, image_err, scat_angle_deg, bin_width=1) -> dict:
     counts = []
     errs = []
     for i in range(len(bins) - 1):
-        mask = (scat_angle_deg >= bins[i]) & (scat_angle_deg <  bins[i + 1]) & np.isfinite(image)
+        mask = (scat_angle_deg >= bins[i]) & (scat_angle_deg < bins[i + 1]) & np.isfinite(image)
         data = image[mask]
         err = image_err[mask]
         mean = np.mean(data)
@@ -43,9 +41,11 @@ def get_spf(image, image_err, scat_angle_deg, bin_width=1) -> dict:
     result = {"scat_angle": bin_centers, "profile": np.array(counts), "error": np.array(errs)}
     return result
 
+
 def quickplot(Qphi, Uphi):
     import proplot as pro
     from astropy.visualization import simple_norm
+
     fig, axes = pro.subplots(ncols=2)
     norm = simple_norm(Qphi, stretch="asinh", vmin=0)
     axes[0].imshow(Qphi, origin="lower", cmap="magma", norm=norm, vmin=0)
@@ -54,14 +54,12 @@ def quickplot(Qphi, Uphi):
     pro.show(block=True)
     pro.close()
 
+
 def process_vampires(folder: str) -> None:
     date = folder.split("_")[0]
     # load data
     with fits.open(
-        paths.data
-        / folder
-        / "optimized"
-        / f"{date}_HD169142_vampires_stokes_cube_optimized.fits"
+        paths.data / folder / "optimized" / f"{date}_HD169142_vampires_stokes_cube_optimized.fits"
     ) as hdul:
         stokes_cube = hdul[0].data
 
@@ -123,13 +121,8 @@ def process_vampires(folder: str) -> None:
 
 def process_naco(folder: str) -> None:
     # load data
-    Qphi = fits.getdata(
-        paths.data / folder / "coadded" / "Q_phi.fits",
-        ext=("Q_PHI_CTC_IPS", 1),
-    )
-    Uphi = fits.getdata(
-        paths.data / folder / "coadded" / "U_phi.fits", ext=("U_PHI_CTC_IPS", 1)
-    )
+    Qphi = fits.getdata(paths.data / folder / "coadded" / "Q_phi.fits", ext=("Q_PHI_CTC_IPS", 1))
+    Uphi = fits.getdata(paths.data / folder / "coadded" / "U_phi.fits", ext=("U_PHI_CTC_IPS", 1))
 
     radius_map = fits.getdata(
         paths.data / folder / "diskmap" / f"{folder}_HD169142_diskmap_radius.fits"
@@ -339,6 +332,7 @@ def process_gpi(folder: str) -> None:
     output_name = paths.data / folder / f"{folder}_HD169142_pol_spf.csv"
     output_df.to_csv(output_name, index=False)
 
+
 def process_charis(folder: str) -> None:
     # load data
     Qphi = fits.getdata(paths.data / folder / f"{folder}_HD169142_Qphi.fits")
@@ -395,7 +389,6 @@ def process_charis(folder: str) -> None:
     output_df.to_csv(output_name, index=False)
 
 
-
 if __name__ == "__main__":
     folders = [
         "20120726_NACO_H",
@@ -408,7 +401,7 @@ if __name__ == "__main__":
         "20230707_VAMPIRES_MBI",
         "20240729_VAMPIRES_MBI",
     ]
-    for i, folder in enumerate(tqdm.tqdm(folders)):
+    for _i, folder in enumerate(tqdm.tqdm(folders)):
         if "VAMPIRES" in folder:
             process_vampires(folder)
         elif "NACO" in folder:

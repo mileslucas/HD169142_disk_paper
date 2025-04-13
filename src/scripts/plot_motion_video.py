@@ -1,21 +1,21 @@
-import paths
-import proplot as pro
+import logging
+
+import cv2
+import logging_config  # noqa: F401
 import matplotlib.animation as animation
 import matplotlib.pyplot as plt
 import numpy as np
-from astropy.visualization import simple_norm
-from utils_plots import setup_rc
-from utils_organization import folders, time_from_folder, pxscales
-from utils_indexing import frame_radii
+import paths
+import proplot as pro
 from astropy.io import fits
-from target_info import target_info
-from scipy import interpolate
-import logging_config
-import logging
-from matplotlib import patches
-from utils_ephemerides import keplerian_warp2d
 from astropy.time import Time
-import cv2
+from astropy.visualization import simple_norm
+from matplotlib import patches
+from target_info import target_info
+from utils_ephemerides import keplerian_warp2d
+from utils_indexing import frame_radii
+from utils_organization import folders, pxscales, time_from_folder
+from utils_plots import setup_rc
 
 logger = logging.getLogger(__file__)
 
@@ -29,6 +29,7 @@ def inner_ring_mask(frame, radii):
     rad_mask = (radii >= rin_au) & (radii <= rout_au)
     return np.where(rad_mask, frame, np.nan)
 
+
 def linear_interpolation(t, t0, t1, frame0, frame1):
     ti = (t - t0) / (t1 - t0)
     # allow broadcasting for speed
@@ -37,7 +38,6 @@ def linear_interpolation(t, t0, t1, frame0, frame1):
 
 
 def motion_interpolation(t, t0, t1, frame0, frame1, radii_au):
-
     frames = []
     for ti in t:
         tfrac = (ti - t0) / (t1 - t0)
@@ -55,7 +55,9 @@ def get_frames():
     frames = {}
     r2_maps = {}
     for folder in folders[:-1]:
-        filename = paths.data / folder / "diskmap" / f"{folder}_HD169142_diskmap_Qphi_deprojected.fits"
+        filename = (
+            paths.data / folder / "diskmap" / f"{folder}_HD169142_diskmap_Qphi_deprojected.fits"
+        )
         data = fits.getdata(filename, memmap=False)
         rs_px = frame_radii(data)
         rs_au = rs_px * pxscales[folder] * target_info.dist_pc
@@ -65,6 +67,7 @@ def get_frames():
         frames[folder] = frame_r2
 
     return frames, r2_maps
+
 
 def regrid_frames(frames, r2_maps):
     # determine the finest spacing
@@ -81,13 +84,19 @@ def regrid_frames(frames, r2_maps):
         cy, cx = np.array(frame.shape) / 2 - 0.5
         grid_ys = grid_ys_au / (pxscales[folder] * target_info.dist_pc) + cy
         grid_xs = grid_xs_au / (pxscales[folder] * target_info.dist_pc) + cx
-        regridded_frame = cv2.remap(frame.astype("f4"), grid_xs.astype("f4"), grid_ys.astype("f4"), interpolation=cv2.INTER_LANCZOS4)
+        regridded_frame = cv2.remap(
+            frame.astype("f4"),
+            grid_xs.astype("f4"),
+            grid_ys.astype("f4"),
+            interpolation=cv2.INTER_LANCZOS4,
+        )
         regridded[folder] = regridded_frame
     return regridded, min_pxscale
 
+
 def normalize_frames(frames, r2_maps):
     output = {}
-    for folder in frames.keys():
+    for folder in frames:
         frame = frames[folder]
         r2_map = r2_maps[folder]
         _masked = inner_ring_mask(frame, np.sqrt(r2_map))
@@ -97,8 +106,9 @@ def normalize_frames(frames, r2_maps):
         output[folder] = norm(frame, clip=True)
     return output
 
+
 def interpolate_frames(timestamps, frames, rad_au):
-    # timing, we 
+    # timing, we
     total_year = (timestamps[-1] - timestamps[0]) / 365.25
     total_frames = int(total_year / YEAR_PER_SEC * GIF_FPS)
     times = np.linspace(timestamps[0], timestamps[-1], total_frames)
@@ -119,6 +129,7 @@ def _str_from_timestamp(timestamp):
     time = Time(timestamp, format="mjd")
     return time.strftime("%Y/%m")
 
+
 def plot_frames(frames, timestamps, pxscale):
     # Create figure
     width = 3.31314
@@ -129,13 +140,15 @@ def plot_frames(frames, timestamps, pxscale):
 
     image = ax.imshow(frames[0], cmap="bone", extent=ext, vmin=0, vmax=1)
     label = ax.text(
-        0.03, 0.97, _str_from_timestamp(timestamps[0]),
+        0.03,
+        0.97,
+        _str_from_timestamp(timestamps[0]),
         fontsize=9,
         transform="axes",
         c="w",
         fontweight="bold",
         ha="left",
-        va="top"
+        va="top",
     )
 
     # star position
@@ -144,42 +157,48 @@ def plot_frames(frames, timestamps, pxscale):
     bar_width_au = 15
     bar_width_arc = bar_width_au / target_info.dist_pc
     bar_width_height = bar_width_arc / 20
-    rect = patches.Rectangle([0.3, -0.32 - bar_width_height/2], -bar_width_arc, bar_width_height, color="white")
+    rect = patches.Rectangle(
+        [0.3, -0.32 - bar_width_height / 2], -bar_width_arc, bar_width_height, color="white"
+    )
     ax.add_patch(rect)
 
     ax.text(
         0.3 - bar_width_arc / 2,
-        -0.32 + bar_width_arc/5,
+        -0.32 + bar_width_arc / 5,
         f"{bar_width_au:.0f} au",
         c="white",
         ha="center",
-        fontsize=9
+        fontsize=9,
     )
 
-    ax.format(
-        xlim=(0.35, -0.35),
-        ylim=(-0.35, 0.35),
-        xlocator="none",
-        ylocator="none"
-    )
+    ax.format(xlim=(0.35, -0.35), ylim=(-0.35, 0.35), xlocator="none", ylocator="none")
 
     def update(idx):
         image.set_data(frames[idx])
         label.set_text(_str_from_timestamp(timestamps[idx]))
-        return image,label
+        return image, label
 
     # Create animation
-    ani = animation.FuncAnimation(fig, update, frames=len(frames), interval=1000 // GIF_FPS, blit=False, repeat=True, save_count=len(frames))
+    ani = animation.FuncAnimation(
+        fig,
+        update,
+        frames=len(frames),
+        interval=1000 // GIF_FPS,
+        blit=False,
+        repeat=True,
+        save_count=len(frames),
+    )
 
     # Save video (requires ffmpeg or mencoder)
     plt.show()
     ani.save(
-        paths.figures / "HD169142_2012-2024_keplerian.gif", 
+        paths.figures / "HD169142_2012-2024_keplerian.gif",
         writer=animation.ImageMagickFileWriter(fps=GIF_FPS),
         # writer=animation.FFMpegWriter(fps=GIF_FPS, extra_args=['-vcodec', 'libx264']),
-        progress_callback=lambda i, n: print(f'Saving frame {i} of {n}')
+        progress_callback=lambda i, n: print(f"Saving frame {i} of {n}"),
     )
     return ani
+
 
 if __name__ == "__main__":
     setup_rc()
@@ -203,7 +222,5 @@ if __name__ == "__main__":
     rad_au = frame_radii(frames_regrid[folders[0]]) * pxscale * target_info.dist_pc
     frames_itp, times = interpolate_frames(timestamps, frames, rad_au)
 
-
     logger.info("Plotting frames")
     plot_frames(frames_itp, times, pxscale)
-   

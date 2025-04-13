@@ -1,16 +1,13 @@
 import numpy as np
 import paths
-from astropy.io import fits
+import polarTransform as pt
 import tqdm
 from astropy.convolution import convolve, kernels
-import polarTransform as pt
-from utils_indexing import frame_radii
-from target_info import target_info
+from astropy.io import fits
 from utils_ephemerides import _DEG_PER_PIXEL
-from utils_organization import pxscales
+from utils_indexing import frame_radii
 
 if __name__ == "__main__":
-
     folders = [
         "20120726_NACO_H",
         "20140425_GPI_J",
@@ -27,10 +24,10 @@ if __name__ == "__main__":
 
     names = ["F610", "F670", "F720", "F760"]
     psfs = [fits.getdata(paths.data / f"VAMPIRES_{filt}_synthpsf.fits") for filt in names]
-    vamp_psf = sum(psfs) # add together PSFs
-    vamp_psf /= sum(vamp_psf) # normalize PSF kernel
+    vamp_psf = sum(psfs)  # add together PSFs
+    vamp_psf /= sum(vamp_psf)  # normalize PSF kernel
 
-    for i, folder in enumerate(tqdm.tqdm(folders)):
+    for _i, folder in enumerate(tqdm.tqdm(folders)):
         keyset = ("Qphi", "Uphi") if "ALMA" not in folder else ("I",)
         for key in keyset:
             # load data
@@ -43,7 +40,9 @@ if __name__ == "__main__":
 
             idx_radii = frame_radii(deprojected_frame)
 
-            smoothed_frame = convolve(deprojected_frame, kernels.Gaussian2DKernel(1 / (2 * np.sqrt(2 * np.log(2)))))
+            smoothed_frame = convolve(
+                deprojected_frame, kernels.Gaussian2DKernel(1 / (2 * np.sqrt(2 * np.log(2))))
+            )
 
             max_rad = deprojected_frame.shape[-2] // 2
             if "ALMA" in folder:
@@ -54,7 +53,7 @@ if __name__ == "__main__":
 
             polar_frame, polar_settings = pt.convertToPolarImage(
                 data,
-                angleSize=360//_DEG_PER_PIXEL,  # 5 degree per bin
+                angleSize=360 // _DEG_PER_PIXEL,  # 5 degree per bin
                 initialRadius=0,
                 finalRadius=max_rad,
                 radiusSize=max_rad,

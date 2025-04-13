@@ -1,18 +1,15 @@
-import proplot as pro
-import numpy as np
-import paths
-from astropy.io import fits
-from skimage.transform import warp_polar
-from astropy.convolution import convolve, kernels
-import tqdm
-from astropy.visualization import simple_norm
-from target_info import target_info
-from scipy import interpolate
-import cv2
 import os
 
-from utils_organization import folders, pxscales, time_from_folder
+import cv2
+import numpy as np
+import paths
+import proplot as pro
+import tqdm
+from astropy.io import fits
+from astropy.visualization import simple_norm
+from target_info import target_info
 from utils_ephemerides import keplerian_warp
+from utils_organization import folders, pxscales, time_from_folder
 from utils_plots import setup_rc
 
 if __name__ == "__main__":
@@ -35,24 +32,18 @@ if __name__ == "__main__":
 
     ## Plot and save
     width = 3.31314
-    aspect_ratio = 1/2
+    aspect_ratio = 1 / 2
     height = width * aspect_ratio
     fig, axes = pro.subplots(width=f"{width}in", height=f"{height}in")
 
     common_rs = np.linspace(15, 35, alma_data.shape[0])
-    common_thetas = np.arange(0, 360//5)
+    common_thetas = np.arange(0, 360 // 5)
     thetas_grid, rs_grid = np.meshgrid(common_thetas, common_rs)
-    images= []
-    for i, folder in enumerate(tqdm.tqdm(folders)):
-
-    # load data
-        with fits.open(
-            paths.data
-            / folder
-            / f"{folder}_HD169142_Qphi_polar.fits"
-        ) as hdul:
+    images = []
+    for _i, folder in enumerate(tqdm.tqdm(folders)):
+        # load data
+        with fits.open(paths.data / folder / f"{folder}_HD169142_Qphi_polar.fits") as hdul:
             polar_cube = hdul[0].data
-
 
         rin = np.floor(15 / (target_info.dist_pc * pxscales[folder])).astype(int)
         rout = np.ceil(35 / (target_info.dist_pc * pxscales[folder])).astype(int)
@@ -60,14 +51,24 @@ if __name__ == "__main__":
         rs = np.arange(polar_cube.shape[0])
 
         mask = (rs >= rin) & (rs <= rout)
-        ext = (0, 360, rin * pxscales[folder] * target_info.dist_pc, rout * pxscales[folder] * target_info.dist_pc)
+        ext = (
+            0,
+            360,
+            rin * pxscales[folder] * target_info.dist_pc,
+            rout * pxscales[folder] * target_info.dist_pc,
+        )
         rs_au = rs[mask] * target_info.dist_pc * pxscales[folder]
 
         this_time = time_from_folder(folder)
         polar_cube_warped = keplerian_warp(polar_cube[mask, :], rs_au, this_time, alma_time)
 
         rs_grid_norm = (rs_grid - rs_au.min()) / (target_info.dist_pc * pxscales[folder])
-        data = cv2.remap(polar_cube_warped, thetas_grid.astype("f4"), rs_grid_norm.astype("f4"), cv2.INTER_LANCZOS4)
+        data = cv2.remap(
+            polar_cube_warped,
+            thetas_grid.astype("f4"),
+            rs_grid_norm.astype("f4"),
+            cv2.INTER_LANCZOS4,
+        )
 
         images.append(data / np.nanmedian(data))
 
@@ -85,37 +86,28 @@ if __name__ == "__main__":
     )
 
     ## sup title
-    axes.format(
-        aspect="auto",
-        xlabel="Angle E of N (°)",
-        ylabel="Separation (au)",
-        xlocator=90,
-    )
+    axes.format(aspect="auto", xlabel="Angle E of N (°)", ylabel="Separation (au)", xlocator=90)
 
     path_1 = paths.figures / "HD169142_polar_median_Qphi_inner.pdf"
     fig.savefig(path_1, bbox_inches="tight")
 
-
-    norm = simple_norm(alma_data, vmin=0)#, stretch="sinh", sinh_a=0.5)
-    im = axes[0].imshow(alma_data, extent=ext, norm=norm, vmin=norm.vmin, vmax=norm.vmax, cmap="inferno")
+    norm = simple_norm(alma_data, vmin=0)  # , stretch="sinh", sinh_a=0.5)
+    im = axes[0].imshow(
+        alma_data, extent=ext, norm=norm, vmin=norm.vmin, vmax=norm.vmax, cmap="inferno"
+    )
 
     label.set_text("ALMA (1.3 mm)")
     label.set_ha("right")
     label.set_position((0.99, 0.95))
-    
-    axes.format(
-        aspect="auto",
-        xlabel="Angle E of N (°)",
-        ylabel="Separation (au)",
-        xlocator=90,
-    )
+
+    axes.format(aspect="auto", xlabel="Angle E of N (°)", ylabel="Separation (au)", xlocator=90)
 
     path_2 = paths.figures / "HD169142_polar_median_ALMA_inner.pdf"
     fig.savefig(path_2, bbox_inches="tight")
 
     # call imagemagick
 
-    gif_duration = 10 # seconds
+    gif_duration = 10  # seconds
     gif_fps = 12
     gif_frames = gif_duration * gif_fps
 

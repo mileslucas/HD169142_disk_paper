@@ -1,5 +1,6 @@
 import proplot as pro
 
+
 def setup_rc() -> None:
     pro.rc["figure.dpi"] = 300
     pro.rc["title.size"] = 8

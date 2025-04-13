@@ -1,11 +1,10 @@
 import numpy as np
-from target_info import target_info
 
 np.random.seed(169142)
 
 _DEG_PER_PX = 5
 
-  
+
 def phase_correlogram(signal, ref_signal, degs_per_px=5):
     im_fft = np.fft.rfft(signal, norm="ortho")
     ref_fft = np.fft.rfft(ref_signal, norm="ortho")
@@ -17,9 +16,9 @@ def phase_correlogram(signal, ref_signal, degs_per_px=5):
 
     correlogram = np.real(np.fft.ifftshift(cross_correlation))
     # Compute the frequency bins
-    lags_samples = np.arange(len(correlogram)) - len(correlogram)/2
+    lags_samples = np.arange(len(correlogram)) - len(correlogram) / 2
     lags_degs = lags_samples * degs_per_px
-    
+
     return lags_degs, correlogram
 
 
@@ -35,7 +34,9 @@ def phase_correlogram(signal, ref_signal, degs_per_px=5):
 def bootstrap_phase_correlogram(signal, signal_err, ref_signal, ref_signal_err, N=10000, **kwargs):
     # assume normally distributed errorss
     signal_samples = signal[None, :] + np.random.randn(N, len(signal)) * signal_err[None, :]
-    ref_signal_samples = ref_signal[None, :] + np.random.randn(N, len(signal)) * ref_signal_err[None, :]
+    ref_signal_samples = (
+        ref_signal[None, :] + np.random.randn(N, len(signal)) * ref_signal_err[None, :]
+    )
 
     lags = []
     correlograms = []

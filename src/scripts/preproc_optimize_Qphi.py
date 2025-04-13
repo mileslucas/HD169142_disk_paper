@@ -1,10 +1,11 @@
-from utils_stokes import optimize_Uphi_cube
 import logging
+
+import numpy as np
 import paths
 import tqdm.auto as tqdm
 from astropy.io import fits
 from utils_indexing import frame_radii
-import numpy as np
+from utils_stokes import optimize_Uphi_cube
 
 logger = logging.getLogger(__file__)
 

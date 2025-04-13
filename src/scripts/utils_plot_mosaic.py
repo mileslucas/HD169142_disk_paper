@@ -1,10 +1,10 @@
-from matplotlib import patches
-import proplot as pro
 import numpy as np
-from utils_indexing import frame_radii
-from target_info import TargetInfo
+import proplot as pro
+from astropy.convolution import Gaussian2DKernel, convolve_fft
+from matplotlib import patches
 from matplotlib.ticker import MaxNLocator
-from astropy.convolution import convolve_fft, Gaussian2DKernel
+from target_info import TargetInfo
+from utils_indexing import frame_radii
 
 pro.rc["legend.fontsize"] = 7
 pro.rc["font.size"] = 8
@@ -43,27 +43,16 @@ def plot_mosaic(stokes_cube, iwa, idx=4):
     )
 
     for Qphi, ax, title in zip(Qphi_frames, axes, titles):
-        im = ax.imshow(
-            Qphi, extent=ext, vmin=0, vmax=0.9 * np.nanmax(Qphi), cmap="bone"
-        )
-        ax.text(
-            0.03,
-            0.97,
-            title,
-            transform="axes",
-            c="white",
-            ha="left",
-            va="top",
-            fontsize=9,
-        )
+        ax.imshow(Qphi, extent=ext, vmin=0, vmax=0.9 * np.nanmax(Qphi), cmap="bone")
+        ax.text(0.03, 0.97, title, transform="axes", c="white", ha="left", va="top", fontsize=9)
 
-    vmax = np.nanpercentile(Qphi_sum, 99.9)
+    np.nanpercentile(Qphi_sum, 99.9)
 
     # im = axes[4].imshow(Qphi_sum, extent=ext, vmin=0, vmax=vmax)
     # axes[4].text(0.03, 0.92, r"Mean", transform="axes", c="white", fontsize=9)
 
     Qphi_sum_r2 = Qphi_sum * rs**2
-    vmax = np.nanpercentile(Qphi_sum_r2, 98)
+    np.nanpercentile(Qphi_sum_r2, 98)
     # im = axes[5].imshow(Qphi_sum_r2, extent=ext, vmin=0, vmax=vmax)
     # axes[5].text(
     #     0.03,
@@ -77,16 +66,7 @@ def plot_mosaic(stokes_cube, iwa, idx=4):
 
     for ax in axes:
         # coronagraph mask
-        ax.scatter(
-            0,
-            0,
-            color="white",
-            alpha=0.8,
-            marker="+",
-            ms=20,
-            lw=0.5,
-            zorder=999,
-        )
+        ax.scatter(0, 0, color="white", alpha=0.8, marker="+", ms=20, lw=0.5, zorder=999)
         circ = patches.Circle([0, 0], iwa * 1e-3, ec="white", fc="k", lw=1)
         ax.add_patch(circ)
     # scale bar
@@ -113,24 +93,12 @@ def plot_mosaic(stokes_cube, iwa, idx=4):
     delta = np.array((0, arrow_length))
     axes[3].plot((-0.53, delta[0] + -0.53), (-0.53, delta[1] + -0.53), color="w", lw=1)
     axes[3].text(
-        delta[0] - 0.53,
-        -0.53 + delta[1],
-        "N",
-        color="w",
-        fontsize=7,
-        ha="center",
-        va="bottom",
+        delta[0] - 0.53, -0.53 + delta[1], "N", color="w", fontsize=7, ha="center", va="bottom"
     )
     delta = np.array((arrow_length, 0))
     axes[3].plot((-0.53, delta[0] + -0.53), (-0.53, delta[1] + -0.53), color="w", lw=1)
     axes[3].text(
-        delta[0] - 0.525,
-        -0.535 + delta[1],
-        "E",
-        color="w",
-        fontsize=7,
-        ha="right",
-        va="center",
+        delta[0] - 0.525, -0.535 + delta[1], "E", color="w", fontsize=7, ha="right", va="center"
     )
 
     ## sup title
@@ -175,17 +143,8 @@ def plot_rdi_mosaic(rdi_cube, iwa, smooth=True):
         vmin, vmax = np.nanpercentile(rdi_frame, (0.1, 99.9))
         if smooth:
             rdi_frame = convolve_fft(rdi_frame, Gaussian2DKernel(1, 1))
-        im = ax.imshow(rdi_frame, extent=ext, vmin=0, vmax=vmax, cmap="magma")
-        ax.text(
-            0.03,
-            0.97,
-            title,
-            transform="axes",
-            c="white",
-            ha="left",
-            va="top",
-            fontsize=9,
-        )
+        ax.imshow(rdi_frame, extent=ext, vmin=0, vmax=vmax, cmap="magma")
+        ax.text(0.03, 0.97, title, transform="axes", c="white", ha="left", va="top", fontsize=9)
 
     vmax = np.nanpercentile(Qphi_sum, 99.9)
 
@@ -207,16 +166,7 @@ def plot_rdi_mosaic(rdi_cube, iwa, smooth=True):
 
     for ax in axes:
         # coronagraph mask
-        ax.scatter(
-            0,
-            0,
-            color="white",
-            alpha=0.8,
-            marker="+",
-            ms=20,
-            lw=0.5,
-            zorder=999,
-        )
+        ax.scatter(0, 0, color="white", alpha=0.8, marker="+", ms=20, lw=0.5, zorder=999)
         circ = patches.Circle([0, 0], iwa * 1e-3, ec="white", fc="k", lw=1)
         ax.add_patch(circ)
     # scale bar
@@ -243,24 +193,12 @@ def plot_rdi_mosaic(rdi_cube, iwa, smooth=True):
     delta = np.array((0, arrow_length))
     axes[3].plot((-0.53, delta[0] + -0.53), (-0.53, delta[1] + -0.53), color="w", lw=1)
     axes[3].text(
-        delta[0] - 0.53,
-        -0.53 + delta[1],
-        "N",
-        color="w",
-        fontsize=7,
-        ha="center",
-        va="bottom",
+        delta[0] - 0.53, -0.53 + delta[1], "N", color="w", fontsize=7, ha="center", va="bottom"
     )
     delta = np.array((arrow_length, 0))
     axes[3].plot((-0.53, delta[0] + -0.53), (-0.53, delta[1] + -0.53), color="w", lw=1)
     axes[3].text(
-        delta[0] - 0.525,
-        -0.535 + delta[1],
-        "E",
-        color="w",
-        fontsize=7,
-        ha="right",
-        va="center",
+        delta[0] - 0.525, -0.535 + delta[1], "E", color="w", fontsize=7, ha="right", va="center"
     )
 
     ## sup title

@@ -1,6 +1,6 @@
+import numpy as np
 import pandas as pd
 import paths
-import numpy as np
 
 table_files = paths.data.glob("**/*vampires_table.csv")
 tables = [pd.read_csv(fname) for fname in table_files]
@@ -15,9 +15,7 @@ def delta_rot(pas):
 # strehls = np.concatenate([met["nvar"] for met in metrics], axis=(0, 1))
 def get_stats(table):
     sub = table.query("U_CAMERA == 1")
-    used_flc = sub["U_FLCEN"].unique()[0] and sub["U_FLCST"].unique()[0].startswith(
-        "IN"
-    )
+    used_flc = sub["U_FLCEN"].unique()[0] and sub["U_FLCST"].unique()[0].startswith("IN")
     stats = {
         "DATE": sub["DATE-OBS"].unique()[0],
         "OBJECT": sub["OBJECT"].unique()[0],

@@ -1,13 +1,12 @@
+import matplotlib.pyplot as plt
 import numpy as np
-import paths
-import tqdm
 import pandas as pd
+import paths
 
 # import pocoMC
 import pocomc as pc
+import tqdm
 from scipy import stats
-import matplotlib.pyplot as plt
-
 
 # Set the random seed.
 np.random.seed(169142)
@@ -24,9 +23,10 @@ def double_powerlaw_ring(radius, r0, amp, alpha1, alpha2):
     dist2 = (radius / r0) ** (2 * alpha2)
     return amp * np.sqrt(2) / np.sqrt(1 / dist1 + 1 / dist2)
 
+
 def gaussian_ring(radius, r0, amp, fwhm):
     sigma = fwhm / (2 * np.sqrt(2 * np.log(2)))
-    sq_mahab_dist = (radius - r0)**2 / sigma**2
+    sq_mahab_dist = (radius - r0) ** 2 / sigma**2
     return amp * np.exp(-0.5 * sq_mahab_dist)
 
 
@@ -41,12 +41,8 @@ def model_two_double_powerlaw_rings(radius, params):
     alpha1_outer = params[4 + 2]
     alpha2_outer = params[4 + 3]
 
-    inner_ring = double_powerlaw_ring(
-        radius, r_inner, amp_inner, alpha1_inner, alpha2_inner
-    )
-    outer_ring = double_powerlaw_ring(
-        radius, r_outer, amp_outer, alpha1_outer, alpha2_outer
-    )
+    inner_ring = double_powerlaw_ring(radius, r_inner, amp_inner, alpha1_inner, alpha2_inner)
+    outer_ring = double_powerlaw_ring(radius, r_outer, amp_outer, alpha1_outer, alpha2_outer)
     return inner_ring + outer_ring
 
 
@@ -60,12 +56,8 @@ def model_gaussian_plus_double_powerlaw_rings(radius, params):
     alpha1_outer = params[3 + 2]
     alpha2_outer = params[3 + 3]
 
-    inner_ring = gaussian_ring(
-        radius, r_inner, amp_inner, fwhm_inner
-    )
-    outer_ring = double_powerlaw_ring(
-        radius, r_outer, amp_outer, alpha1_outer, alpha2_outer
-    )
+    inner_ring = gaussian_ring(radius, r_inner, amp_inner, fwhm_inner)
+    outer_ring = double_powerlaw_ring(radius, r_outer, amp_outer, alpha1_outer, alpha2_outer)
     return inner_ring + outer_ring
 
 
@@ -80,14 +72,14 @@ def fit_model(radius, data, err):
     plot_model(radius, data, X0)
     prior = pc.Prior(
         [
-            stats.halfnorm(X0[0], 5), # radius_inner
-            stats.halfnorm(X0[1], 0.1), # amplitude_inner
-            stats.uniform(1e-2, 10), # alpha_inner
-            stats.uniform(-10, 10 - 1e-2), # beta_inner
-            stats.halfnorm(X0[4], 20), # radius outer
-            stats.halfnorm(X0[5], 0.1), # amplitude outer
-            stats.uniform(1e-2, 20), # alpha_outer
-            stats.uniform(-10, 10 - 1e-2), # beta_outer
+            stats.halfnorm(X0[0], 5),  # radius_inner
+            stats.halfnorm(X0[1], 0.1),  # amplitude_inner
+            stats.uniform(1e-2, 10),  # alpha_inner
+            stats.uniform(-10, 10 - 1e-2),  # beta_inner
+            stats.halfnorm(X0[4], 20),  # radius outer
+            stats.halfnorm(X0[5], 0.1),  # amplitude outer
+            stats.uniform(1e-2, 20),  # alpha_outer
+            stats.uniform(-10, 10 - 1e-2),  # beta_outer
         ]
     )
 
@@ -119,15 +111,13 @@ def plot_model(radius, data, params):
 
 
 if __name__ == "__main__":
-    for i, date in enumerate(tqdm.tqdm(dates)):
+    for _i, date in enumerate(tqdm.tqdm(dates)):
         # load data
-        table = pd.read_csv(
-            paths.data / date / f"{date}_HD169142_vampires_radial_profiles.csv"
-        )
+        table = pd.read_csv(paths.data / date / f"{date}_HD169142_vampires_radial_profiles.csv")
         groups = table.groupby("filter")
         profiles = []
         errs = []
-        for wl_idx, (filt_name, group) in enumerate(tqdm.tqdm(groups)):
+        for _wl_idx, (_filt_name, group) in enumerate(tqdm.tqdm(groups)):
             radius = group["radius(au)"].values
             profiles.append(group["Qphi"])
             errs.append(group["Qphi_err"])
@@ -143,6 +133,9 @@ if __name__ == "__main__":
         # X0 = [19, 0.12, 3, -4, 67, 0.4 * 0.12, 3, -1]
 
         posterior_dict = fit_model(radius[mask], mean_profile[mask], mean_err[mask])
-        np.savez(paths.data / date / f"{date}_HD169142_vampires_radial_profile_posteriors.npz", **posterior_dict)
+        np.savez(
+            paths.data / date / f"{date}_HD169142_vampires_radial_profile_posteriors.npz",
+            **posterior_dict,
+        )
         best_fit = np.median(posterior_dict["samples"], axis=0)
         plot_model(radius, mean_profile, best_fit)

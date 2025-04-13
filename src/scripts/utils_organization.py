@@ -1,5 +1,6 @@
-from astropy import time
 import numpy as np
+from astropy import time
+
 
 def label_from_folder(foldername: str) -> str:
     tokens = foldername.split("_")
@@ -9,11 +10,7 @@ def label_from_folder(foldername: str) -> str:
 
 def time_from_folder(foldername: str) -> time.Time:
     date_raw = foldername.split("_")[0]
-    ymd = {
-        "year": int(date_raw[:4]),
-        "month": int(date_raw[4:6]),
-        "day": int(date_raw[6:])
-    }
+    ymd = {"year": int(date_raw[:4]), "month": int(date_raw[4:6]), "day": int(date_raw[6:])}
     return time.Time(ymd, format="ymdhms")
 
 
@@ -63,7 +60,7 @@ fwhm = {
 }
 
 # wavelengths in micron
-wavelengths = { 
+wavelengths = {
     "20120726_NACO_H": 1.65,
     "20140425_GPI_J": 1.25,
     "20150503_IRDIS_J": 1.245,

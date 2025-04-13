@@ -10,11 +10,7 @@ LOGGING_CONFIG = {
         }
     },
     "handlers": {
-        "console": {
-            "level": "INFO",
-            "class": "logging.StreamHandler",
-            "formatter": "console",
-        },
+        "console": {"level": "INFO", "class": "logging.StreamHandler", "formatter": "console"}
     },
     "loggers": {"": {"handlers": ["console"], "level": "INFO", "propagate": True}},
 }

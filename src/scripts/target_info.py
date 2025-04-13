@@ -1,12 +1,13 @@
 from dataclasses import dataclass
+
 import numpy as np
 
 # calculate the stellar mass aggregated from a couple sources
 masses = [
-    (2.11, 0.14), # B22
-    (1.393, 0.2), # Y21
-    (2.0, 0.13), # R22
-    (1.65, 0.2), # B06
+    (2.11, 0.14),  # B22
+    (1.393, 0.2),  # Y21
+    (2.0, 0.13),  # R22
+    (1.65, 0.2),  # B06
 ]
 
 # def mean_and_std(values):
@@ -19,21 +20,24 @@ masses = [
 #     err = np.hypot(std, rms)
 #     return mean, err
 
+
 def weighted_mean_and_std(values):
     _vals = np.array([v[0] for v in values])
     _errs = np.array([v[1] for v in values])
     weights = 1 / _errs**2
     weights_sum = np.sum(weights)
     mean = np.sum(_vals * weights) / weights_sum
-    stderr = np.sqrt( 1 / weights_sum)
+    stderr = np.sqrt(1 / weights_sum)
     return mean, stderr
+
 
 _mass, _mass_err = weighted_mean_and_std(masses)
 ages = [
-    (6, 3, 6), # G07
-    (8.98, 3.9, 11.02), # R22
+    (6, 3, 6),  # G07
+    (8.98, 3.9, 11.02),  # R22
     (12, 12 - 4, 12 + 8),
 ]
+
 
 def uneven_weighted_mean_and_std(values):
     _vals = np.array([v[0] for v in values])
@@ -49,22 +53,25 @@ def uneven_weighted_mean_and_std(values):
     stderr = np.sqrt(1 / weights_sum)
     return mean, stderr
 
+
 _stellar_age, _stellar_age_err = uneven_weighted_mean_and_std(ages)
+
 
 @dataclass(repr=True)
 class TargetInfo:
     name = "HD169142"
     plx = 8.7053e-3  # " +- 0.0268e-3
-    inclination = 12.45 # deg
-    pos_angle = 5.88 # deg, location of far side minor axis
-    stellar_mass =  _mass # Msun
-    stellar_mass_err =  _mass_err # Msun
-    stellar_age = _stellar_age # Myr
-    stellar_age_err = _stellar_age_err # Myr
+    inclination = 12.45  # deg
+    pos_angle = 5.88  # deg, location of far side minor axis
+    stellar_mass = _mass  # Msun
+    stellar_mass_err = _mass_err  # Msun
+    stellar_age = _stellar_age  # Myr
+    stellar_age_err = _stellar_age_err  # Myr
 
     @property
     def dist_pc(self):
         return 1 / self.plx
+
 
 target_info = TargetInfo()
 
