@@ -79,7 +79,7 @@ if __name__ == "__main__":
     norm_val = np.nanmax(mean_xcorr_inner)
 
     x0, x0err, _, _ = bootstrap_argmax_and_max(common_lag, mean_xcorr_inner, mean_xcorr_inner_err)
-    with open(paths.data / "location_cross_correlation_peaks.csv", "w") as fh:
+    with (paths.data / "location_cross_correlation_peaks.csv").open("w") as fh:
         fh.write(f"inner,{x0},{x0err}\n")
     print(f"Inner ring peak correlation: {x0} ± {x0err} deg/yr")
 

@@ -64,7 +64,9 @@ def calculate_gap_params(radii_au, profile):
 
 
 def bootstrap_gap_params(radii_au, profile, profile_err, N=10000):
-    samples = profile[None, :] + np.random.randn(N, len(profile)) * profile_err[None, :]
+    signal_samples = old_y[None, :] + np.random.randn(N, len(old_y)) * old_err[None, :]
+    rng = np.random.default_rng(169142)
+    samples = rng.normal(loc=profile, scale=profile_err, size=(N, len(profile)))
 
     results = [calculate_gap_params(radii_au, sample) for sample in samples]
 
@@ -125,7 +127,7 @@ if __name__ == "__main__":
     mean_curve /= norm_val
     stderr_curve /= norm_val
 
-    with open(paths.data / "radial_profile_peaks.csv", "w") as fh:
+    with (paths.data / "radial_profile_peaks.csv").open("w") as fh:
         inner_mask = (common_rs >= 10) & (common_rs <= 40)
         qphi_peak, qphi_peak_err, _, _ = bootstrap_argmax_and_max(
             common_rs[inner_mask], mean_curve[inner_mask], stderr_curve[inner_mask]

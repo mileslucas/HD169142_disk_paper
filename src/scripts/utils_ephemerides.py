@@ -61,10 +61,11 @@ def keplerian_warp(polar_frame, radii_au, time: time.Time, ref_time: time.Time):
 
 
 def bootstrap_keplerian_warp(polar_frame, polar_frame_err, radius_au, *args, N=10000, **kwargs):
-    signal_samples = (
-        polar_frame[None, :, :]
-        + np.random.randn(N, *polar_frame.shape) * polar_frame_err[None, :, :]
+    rng = np.random.default_rng(169142)
+    signal_samples = rng.normal(
+        loc=polar_frame, scale=np.abs(polar_frame_err), size=(N, *polar_frame.shape)
     )
+
     results = []
     for signal in signal_samples:
         result = keplerian_warp(signal, radius_au, *args, **kwargs)

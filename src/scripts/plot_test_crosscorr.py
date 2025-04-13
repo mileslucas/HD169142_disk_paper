@@ -13,6 +13,7 @@ def gaussian(x, x0, sigma):
 
 if __name__ == "__main__":
     setup_rc()
+    rng = np.random.default_rng(169142)
 
     ## Plot and save
     width = 3.31314
@@ -24,14 +25,14 @@ if __name__ == "__main__":
 
     # A = np.sin(x)  # Base signal
     A = gaussian(x, x0=1, sigma=0.2)
-    A_err = 0.05 * np.random.randn(len(x))
+    A_err = rng.normal(scale=0.05, size=len(x))
     A += A_err  # +noise
 
     lag_known = 2  # Known shift in indices
     print(f"Lag: {lag_known}")
     B = gaussian(x, x0=3, sigma=0.2)
     # B = np.sin(x - lag_known)
-    B_err = 0.05 * np.random.randn(len(x))
+    B_err = rng.normal(scale=0.05, size=len(x))
     B += B_err
 
     axes[0].plot(x, A, label="A", c="C0", lw=1)

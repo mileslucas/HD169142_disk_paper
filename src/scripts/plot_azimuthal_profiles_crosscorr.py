@@ -97,7 +97,7 @@ if __name__ == "__main__":
     innerpeak, innerpeak_err, _, _ = bootstrap_argmax_and_max(
         common_lag, mean_xcorr_inner, mean_xcorr_inner_err
     )
-    with open(paths.data / "cross_correlation_peaks.csv", "w") as fh:
+    with (paths.data / "cross_correlation_peaks.csv").open("w") as fh:
         fh.write(f"inner,{innerpeak},{innerpeak_err}\n")
     print(f"Inner ring peak correlation: {innerpeak} ± {innerpeak_err} deg/yr")
 
@@ -118,7 +118,7 @@ if __name__ == "__main__":
     )
     print(f"Outer ring peak correlation: {outerpeak} ± {outerpeak_err} deg/yr")
 
-    with open(paths.data / "cross_correlation_peaks.csv", "a") as fh:
+    with (paths.data / "cross_correlation_peaks.csv").open("a") as fh:
         fh.write(f"outer,{outerpeak},{outerpeak_err}\n")
 
     mask = (common_lag >= -7.5) & (common_lag <= 7.5)

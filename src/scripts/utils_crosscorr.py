@@ -1,6 +1,6 @@
 import numpy as np
 
-np.random.seed(169142)
+rng = np.random.default_rng(169142)
 
 _DEG_PER_PX = 5
 
@@ -33,9 +33,9 @@ def phase_correlogram(signal, ref_signal, degs_per_px=5):
 
 def bootstrap_phase_correlogram(signal, signal_err, ref_signal, ref_signal_err, N=10000, **kwargs):
     # assume normally distributed errorss
-    signal_samples = signal[None, :] + np.random.randn(N, len(signal)) * signal_err[None, :]
-    ref_signal_samples = (
-        ref_signal[None, :] + np.random.randn(N, len(signal)) * ref_signal_err[None, :]
+    signal_samples = rng.normal(loc=signal, scale=np.abs(signal_err), size=(N, *signal.shape))
+    ref_signal_samples = rng.normal(
+        loc=ref_signal, scale=np.abs(ref_signal_err), size=(N, *ref_signal.shape)
     )
 
     lags = []

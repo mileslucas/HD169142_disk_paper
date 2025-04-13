@@ -1,6 +1,6 @@
 import numpy as np
 
-np.random.seed(169142)
+rng = np.random.default_rng(169142)
 
 
 def relative_deviation(signal, error):
@@ -18,7 +18,7 @@ def relative_deviation(signal, error):
 
 def bootstrap_argmax_and_max(xs, signal, error, N=10000):
     # assume normally distributed errorss
-    signal_samples = signal[None, :] + np.random.randn(N, len(signal)) * error[None, :]
+    signal_samples = rng.normal(signal, error, size=(N, len(signal)))
 
     max_xs = []
     max_values = []
@@ -38,7 +38,7 @@ def bootstrap_argmax_and_max(xs, signal, error, N=10000):
 
 def bootstrap_argmin_and_min(xs, signal, error, N=10000):
     # assume normally distributed errorss
-    signal_samples = signal[None, :] + np.random.randn(N, len(signal)) * error[None, :]
+    signal_samples = rng.normal(signal, error, size=(N, len(signal)))
 
     min_xs = []
     min_values = []
@@ -58,7 +58,7 @@ def bootstrap_argmin_and_min(xs, signal, error, N=10000):
 
 def bootstrap_interpolate(new_x, old_x, old_y, old_err, N=10000):
     # assume normally distributed errorss
-    signal_samples = old_y[None, :] + np.random.randn(N, len(old_y)) * old_err[None, :]
+    signal_samples = rng.normal(old_y, old_err, size=(N, len(old_y)))
 
     values = []
     for _signal in signal_samples:
