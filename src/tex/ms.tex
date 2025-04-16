@@ -1,9 +1,12 @@
 % Define document class
+% \documentclass[manuscript]{aastex631}
 \documentclass[twocolumn,twocolappendix]{aastex631}
 \usepackage{showyourwork}
 \usepackage{multirow}
+\usepackage{gensymb}
 \usepackage{datetime}
 \usepackage{CJK}
+\usepackage{amsmath}
 \yyyymmdddate
 \usepackage{mathtools}
 \usepackage{savesym}
@@ -20,7 +23,7 @@
 }{\oldenddeluxetable}
 \makeatother
 
-\sisetup{separate-uncertainty=true}
+\sisetup{separate-uncertainty=true,multi-part-units=single}
 
 \DeclareSIUnit{\mag}{mag}
 \DeclareSIUnit{\mas}{mas}
@@ -39,24 +42,40 @@
 \begin{CJK*}{UTF8}{gbsn}
 
 % Title
-\title{Dynamical Analysis of the HD 169142 Transition Disk: A Decadal Survey of High-Contrast Polarimetric Images}
-% \shorttitle{A Decadal Analysis of HD 169142}
+\title{Dynamical Analysis of the HD 169142 Planet-Forming Disk: Twelve Years of High-Contrast Polarimetry}
+\shorttitle{Dynamical Analysis of the HD 169142 Planet-Forming Disk}
 
 % Author list
 \input{authors}
 
-% Abstract with filler text
 \begin{abstract}
+We present a dynamical analysis of the HD 169142 planet-forming disk based on high-contrast polarimetric imaging over a twelve-year observational period, offering insights into protoplanetary disk evolution and planet-disk interactions. This study explores the evolution of scattered-light features and their relationship with millimeter continuum emission. We used archival visible-to-near-infrared scattered-light observations from NACO, SPHERE, and GPI combined with new observations from SCExAO to reveal persistent non-axisymmetric structures in both the inner and outer rings of the disk. Through Keplerian image transformations and phase cross-correlation techniques, we show that the azimuthal brightness variations in the inner ring follow the local Keplerian velocity, suggesting these are intrinsic disk features rather than planet-induced spirals or shadows. The motion of the outer ring remains ambiguous, requiring a longer observational baseline for further confirmation. Comparing scattered-light features with ALMA \SI{1.3}{\milli\meter}-continuum data, we find that the scattered light traces the edges of dust structures in the inner ring, indicating complex interactions and a leaky dust trap around the water-ice snowline. These findings highlight the capability of long-term monitoring of circumstellar disks to distinguish planetary influences from Keplerian disk dynamics.
 \end{abstract}
 
 \input{sections/01_introduction}
-\input{sections/02_observations}
-\input{sections/03_results}
-\input{sections/04_dynamic_analysis}
-\input{sections/05_compare_to_alma}
-\input{sections/06_discussions}
-\input{sections/07_conclusions}
+\input{sections/02_HD169142}
+\input{sections/03_observations}
+\input{sections/04_results}
+\input{sections/05_dynamic_analysis}
+\input{sections/06_compare_to_alma}
+\input{sections/07_discussions}
+\input{sections/08_conclusions}
 \input{acknowledgements}
+
+\facility{Subaru (SCExAO)}
+
+\software{
+    \texttt{CHARIS-DEP},
+    \texttt{CHARIS-DPP},
+    \texttt{vampires-dpp},
+    \texttt{numpy},
+    \texttt{astropy},
+    \texttt{matplotlib},
+    \texttt{proplot},
+    \texttt{pandas},
+    \texttt{diskmap},
+    \texttt{showyourwork},
+}
 
 \bibliography{references}
 
@@ -66,7 +85,7 @@
 
 
 \section{Data and Code Availability}
-This study used the reproducibility software \texttt{showyourwork} \citep{luger_mapping_2021}, which leverages continuous integration to create the figures and compile this manuscript programmatically. Each figure caption contains a link to the script used to make the figure (at the commit corresponding to the current build of the manuscript). The git repository associated with this study is publicly available at \url{https://github.com/mileslucas/HD169142_disk_paper}. Reduced data is available upon request, and raw observational data for the SCExAO observations are available from the SMOKA archive\footnote{\url{https://smoka.nao.ac.jp/}}.
+This study used the reproducibility software \texttt{showyourwork} \citep{luger_mapping_2021}, which leverages continuous integration to create the figures and compile this manuscript programmatically. The git repository associated with this study is publicly available at \url{https://github.com/mileslucas/HD169142_disk_paper}. Reduced data is available upon request, and raw observational data for the SCExAO observations are available from the SMOKA archive\footnote{\url{https://smoka.nao.ac.jp/}}. The GPI data was obtained from \citet{rich_vizier_2022} and the NACO data was obtained from \citet{de_regt_vizier_2024}.
 
 
 \end{CJK*}
