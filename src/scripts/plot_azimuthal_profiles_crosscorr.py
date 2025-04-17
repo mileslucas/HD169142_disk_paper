@@ -145,7 +145,7 @@ if __name__ == "__main__":
     axes[1].format(xlocator=5)
 
     inner_kep = [-5.18 - 0.18, -5.18 + 0.18]
-    axes[0].axvline(-5.18, c="k", alpha=0.9, zorder=-1, lw=1)
+    axes[0].axvline(-5.18, c="k", ls="--", alpha=0.9, zorder=-1, lw=1)
     # axes[0].fill_betweenx([ymin, ymax], *inner_kep, c="0.3", alpha=0.2, zorder=-1)
 
     # add little bars showing spread
@@ -162,7 +162,7 @@ if __name__ == "__main__":
     axes[0].plot(inner_kep, [yloc + 0.05, yloc + 0.05], c="k", lw=1, zorder=10)
 
     outer_kep = [-0.926 - 0.083, -0.926 + 0.083]
-    axes[1].axvline(-0.926, c="k", alpha=0.9, zorder=-1, lw=1)
+    axes[1].axvline(-0.926, c="k", ls="--", alpha=0.9, zorder=-1, lw=1)
     # axes[1].fill_betweenx([ymin, ymax], *outer_kep, c="0.3", alpha=0.2, zorder=-1)
 
     axes[1].scatter(outerpeak, yloc, c="C3", marker=".", markersize=15, zorder=10)

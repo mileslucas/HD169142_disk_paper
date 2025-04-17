@@ -5,7 +5,8 @@ import proplot as pro
 import tqdm
 from astropy.io import fits
 from target_info import target_info
-from utils_ephemerides import keplerian_warp
+from utils_ephemerides import keplerian_warp, bootstrap_keplerian_warp
+from extract_radial_centroids import centroid_with_errors
 from utils_errorprop import bootstrap_argmax_and_max
 from utils_organization import folders, label_from_folder, pxscales, time_from_folder
 from utils_plots import setup_rc
@@ -26,7 +27,7 @@ if __name__ == "__main__":
 
     # colors = [f"C{i}" for i in range(len(folders))]
     for folder_idx, folder in enumerate(tqdm.tqdm(folders)):
-        table = pd.read_csv(paths.data / folder / f"{folder}_HD169142_radial_peaks.csv")
+        table = pd.read_csv(paths.data / folder / f"{folder}_HD169142_azimuthal_centroids.csv")
         groups = table.groupby("region")
         inner_group = groups.get_group("inner")
 
@@ -47,11 +48,12 @@ if __name__ == "__main__":
         mask = (rs >= rin) & (rs <= rout)
         rs_au = rs[mask] * target_info.dist_pc * pxscales[folder]
 
-        Qphi_polar_warped = keplerian_warp(
-            Qphi_polar[mask, :], rs_au, time_from_folder(folder), reference_time
-        )
-        Uphi_polar_warped = keplerian_warp(
-            Uphi_polar[mask, :], rs_au, time_from_folder(folder), reference_time
+        Qphi_polar_warped, Uphi_polar_warped = bootstrap_keplerian_warp(
+            Qphi_polar[mask, :],
+            Uphi_polar[mask, :],
+            rs_au,
+            time_from_folder(folder),
+            reference_time,
         )
 
         peaks = []
@@ -59,7 +61,7 @@ if __name__ == "__main__":
         for az_idx in range(Qphi_polar_warped.shape[1]):
             Qphi_slice = Qphi_polar_warped[:, az_idx]
             Uphi_slice = Uphi_polar_warped[:, az_idx]
-            peak, peakerr, _, _ = bootstrap_argmax_and_max(rs[mask], Qphi_slice, Uphi_slice, 1000)
+            peak, peakerr = centroid_with_errors(rs[mask], Qphi_slice, Uphi_slice)
             peaks.append(peak)
             peak_errs.append(peakerr)
 
@@ -93,15 +95,13 @@ if __name__ == "__main__":
             fontsize=7,
         )
 
-    for ax in axes:
-        ax.axhline(20.9, c="0.3", lw=1, zorder=0)  # radial profile peak
+    # for ax in axes:
+    #     ax.axhline(20.9, c="0.3", lw=1, zorder=0)  # radial profile peak
 
     axes[0, 0].format(title="Original")
-    axes[0, 1].format(title="Keplerian warped")
+    axes[0, 1].format(title="Keplerian corrected")
     # axes[:, 1].format(yspineloc="right")
 
-    axes.format(
-        ylim=(None, 26), xlabel="Azimuth (° East of North)", ylabel=r"Separation (au)", xlocator=90
-    )
+    axes.format(xlabel="Azimuth (° East of North)", ylabel=r"Separation (au)", xlocator=90)
 
     fig.savefig(paths.figures / "HD169142_azimuthal_peaks.pdf", bbox_inches="tight")

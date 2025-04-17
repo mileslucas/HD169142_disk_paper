@@ -38,12 +38,16 @@ def calculate_gap_params(radii_au, profile):
 
     beta = 0.04 * target_info.dist_pc / w_I  # Eqn 19
     # normalized surface density gap width
+    if (norm_w_I**2 - 0.13 * beta**2 / delta_I) < 0:
+        return np.full(15, np.nan)
     norm_w_S = np.sqrt(norm_w_I**2 - 0.13 * beta**2 / delta_I)  # Eqn 20
     aspect_ratio = norm_w_S / 5.8  # Eqn 16
     _coeff = np.power(delta_I, 1 / (0.85 - 0.44 * beta**2))
     delta_S = _coeff / (1 - 0.0069 * _coeff)
 
     alpha_test = np.array((1e-4, 1e-3, 1e-2))
+    if np.any(((delta_S - 1) * (aspect_ratio) ** 5 / 0.043 * alpha_test) < 0):
+        return np.full(15, np.nan)
     q = np.sqrt((delta_S - 1) * (aspect_ratio) ** 5 / 0.043 * alpha_test)
     Mp = q * target_info.stellar_mass * 1047
 
@@ -64,7 +68,6 @@ def calculate_gap_params(radii_au, profile):
 
 
 def bootstrap_gap_params(radii_au, profile, profile_err, N=10000):
-    signal_samples = old_y[None, :] + np.random.randn(N, len(old_y)) * old_err[None, :]
     rng = np.random.default_rng(169142)
     samples = rng.normal(loc=profile, scale=profile_err, size=(N, len(profile)))
 
@@ -330,9 +333,9 @@ if __name__ == "__main__":
         Mp3_err,
     ) = param_errs
 
-    keck_Mp = 1.96  # M_j
+    keck_Mp = np.array((1.4, 2.2))  # M_j
     keck_q = keck_Mp / 1047 / target_info.stellar_mass
-    keck_alpha = keck_q**2 / ((delta_S - 1) * (aspect_ratio) ** 5) * 0.043
+    keck_alpha = keck_q**2 / (delta_S - 1) / aspect_ratio**5 * 0.043
 
     print(f"Qphi gap r_min: {r_min} ± {r_min_err} au, {I_rmin * 100} ± {I_rmin_err * 100} %")
 
@@ -349,7 +352,7 @@ if __name__ == "__main__":
     print("Using ⍺: [1e-4, 1e-3, 1e-2]")
     print(f"Qphi mass ratios: [{q1} ± {q1_err}, {q2} ± {q2_err}, {q3} ± {q3_err}]")
     print(f"Qphi planet masses: [{Mp1} ± {Mp1_err}, {Mp2} ± {Mp2_err}, {Mp3} ± {Mp3_err}] M_J")
-    print(f"Qphi viscosity for {keck_Mp} MJ: {keck_alpha:.1e}")
+    print(f"alpha given Keck mass limits {keck_Mp} MJ: {keck_alpha}")
 
     axes[0].axvline(r_min, c="0.3", ls="--", lw=1, alpha=0.7)
 

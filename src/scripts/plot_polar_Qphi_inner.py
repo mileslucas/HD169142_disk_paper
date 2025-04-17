@@ -103,7 +103,7 @@ if __name__ == "__main__":
             )
 
     axes[0, 0].format(title="Original")
-    axes[0, 1].format(title="Keplerian warped")
+    axes[0, 1].format(title="Keplerian corrected")
     axes[:-1, :].format(xtickloc="none")
     axes[:, 1:].format(ytickloc="none")
     ## sup title
